@@ -1,19 +1,23 @@
 'use client'
 
-import * as React from 'react'
-import * as PopoverPrimitive from '@radix-ui/react-popover'
+import { type ComponentProps } from 'react'
+import {
+  Anchor as PopoverAnchorPrimitive,
+  Content as PopoverContentPrimitive,
+  Portal as PopoverPortal,
+  Root as PopoverRoot,
+  Trigger as PopoverTriggerPrimitive,
+} from '@radix-ui/react-popover'
 import { cn } from '@/lib/utils'
 
-function Popover({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+function Popover({ ...props }: ComponentProps<typeof PopoverRoot>) {
+  return <PopoverRoot data-slot="popover" {...props} />
 }
 
 function PopoverTrigger({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}: ComponentProps<typeof PopoverTriggerPrimitive>) {
+  return <PopoverTriggerPrimitive data-slot="popover-trigger" {...props} />
 }
 
 function PopoverContent({
@@ -21,10 +25,10 @@ function PopoverContent({
   align = 'center',
   sideOffset = 4,
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: ComponentProps<typeof PopoverContentPrimitive>) {
   return (
-    <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Content
+    <PopoverPortal>
+      <PopoverContentPrimitive
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
@@ -34,14 +38,14 @@ function PopoverContent({
         )}
         {...props}
       />
-    </PopoverPrimitive.Portal>
+    </PopoverPortal>
   )
 }
 
 function PopoverAnchor({
   ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
-  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}: ComponentProps<typeof PopoverAnchorPrimitive>) {
+  return <PopoverAnchorPrimitive data-slot="popover-anchor" {...props} />
 }
 
-export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }
+export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger }
