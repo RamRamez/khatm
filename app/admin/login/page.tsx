@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
                   required
                   placeholder="example@email.com"
                   dir="ltr"
-                  className="text-left"
+                  className="text-right"
                 />
               </div>
 

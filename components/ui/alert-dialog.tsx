@@ -1,10 +1,10 @@
 'use client'
 
-import * as React from 'react'
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
+import * as React from 'react'
 
-import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 function AlertDialog({
   ...props
@@ -70,7 +70,7 @@ function AlertDialogHeader({
   return (
     <div
       data-slot="alert-dialog-header"
-      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      className={cn('flex flex-col gap-2 text-center sm:text-right', className)}
       {...props}
     />
   )
@@ -143,15 +143,7 @@ function AlertDialogCancel({
 }
 
 export {
-  AlertDialog,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialog, AlertDialogAction,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle, AlertDialogTrigger
 }
+

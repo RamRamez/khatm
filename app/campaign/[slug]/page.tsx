@@ -1,20 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound } from 'next/navigation';
 import CampaignReader from "@/components/campaign-reader";
 import { getTotalVersesForCampaign } from "@/lib/quran-data";
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function CampaignPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug: encodedSlug } = await params;
+  // Decode the slug to handle Persian/Arabic characters
+  const slug = decodeURIComponent(encodedSlug);
   const supabase = await createClient();
 
   const { data: campaign } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("is_active", true)
     .single();
 
@@ -22,24 +27,25 @@ export default async function CampaignPage({
     notFound();
   }
 
-  // Get total readings count
-  const { count: readingsCount } = await supabase
-    .from("verse_readings")
-    .select("*", { count: "exact", head: true })
-    .eq("campaign_id", id);
-
   const totalVerses = getTotalVersesForCampaign(
     campaign.type as "general" | "surah",
     campaign.surah_number
   );
 
-  const completionCount = Math.floor((readingsCount || 0) / totalVerses);
+  // Use the completion_count field from the database instead of calculating it
+  const completionCount = campaign.completion_count || 0;
+
+  // Check if user is authenticated for admin button
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <CampaignReader
       campaign={campaign}
       completionCount={completionCount}
       totalVerses={totalVerses}
+      isAdmin={!!user}
     />
   );
 }

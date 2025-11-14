@@ -1,7 +1,7 @@
-import type { Metadata } from 'next'
-import { Vazirmatn } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
+import { Analytics } from '@vercel/analytics/next';
+import type { Metadata } from 'next';
+import { Vazirmatn } from 'next/font/google';
+import './globals.css';
 
 const vazirmatn = Vazirmatn({ subsets: ["arabic"], variable: "--font-vazirmatn" });
 
