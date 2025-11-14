@@ -1,21 +1,27 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { QURAN_SURAHS } from "@/lib/quran-data";
-import { createClient } from "@/lib/supabase/server";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { QURAN_SURAHS } from '@/lib/quran-data';
+import { createClient } from '@/lib/supabase/server';
 import { BookMarked, BookOpen, Calendar, Settings } from 'lucide-react';
-import Link from "next/link";
+import Link from 'next/link';
 
 export default async function HomePage() {
   const supabase = await createClient();
 
   // Only show public campaigns on homepage
   const { data: campaigns } = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("is_public", true)
-    .order("is_active", { ascending: false })
-    .order("created_at", { ascending: false });
+    .from('campaigns')
+    .select('*')
+    .eq('is_public', true)
+    .order('is_active', { ascending: false })
+    .order('created_at', { ascending: false });
 
   // Check if user is authenticated
   const {
@@ -63,24 +69,30 @@ export default async function HomePage() {
             ختم قرآن کریم
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            در کمپین های ختم قرآن شرکت کنید و با خواندن آیات قرآن کریم به ختم جمعی کمک کنید
+            در کمپین های ختم قرآن شرکت کنید و با خواندن آیات قرآن کریم به ختم
+            جمعی کمک کنید
           </p>
         </div>
 
         {/* Campaigns Grid */}
         {campaigns && campaigns.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {campaigns.map((campaign) => (
-              <Card key={campaign.id} className="hover:shadow-lg transition-shadow border-2 hover:border-primary/50">
+            {campaigns.map(campaign => (
+              <Card
+                key={campaign.id}
+                className="hover:shadow-lg transition-shadow border-2 hover:border-primary/50"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <CardTitle className="text-2xl">{campaign.name}</CardTitle>
-                    <Badge variant={campaign.is_active ? "default" : "secondary"}>
-                      {campaign.is_active ? "فعال" : "غیرفعال"}
+                    <Badge
+                      variant={campaign.is_active ? 'default' : 'secondary'}
+                    >
+                      {campaign.is_active ? 'فعال' : 'غیرفعال'}
                     </Badge>
                   </div>
                   <CardDescription className="text-base">
-                    {campaign.type === "general" ? (
+                    {campaign.type === 'general' ? (
                       <span>ختم کامل قرآن کریم</span>
                     ) : (
                       <span>سوره {campaign.surah_name}</span>
@@ -109,15 +121,20 @@ export default async function HomePage() {
                         </div>
                       )}
 
-                      {campaign.current_surah_number && campaign.current_verse_number && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <BookMarked className="w-4 h-4" />
-                          <span>آخرین آیه:</span>
-                          <span className="font-medium text-foreground">
-                            سوره {getSurahName(campaign.current_surah_number)}، آیه {campaign.current_verse_number > 1 ? campaign.current_verse_number - 1 : campaign.current_verse_number}
-                          </span>
-                        </div>
-                      )}
+                      {campaign.current_surah_number &&
+                        campaign.current_verse_number && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <BookMarked className="w-4 h-4" />
+                            <span>آخرین آیه:</span>
+                            <span className="font-medium text-foreground">
+                              سوره {getSurahName(campaign.current_surah_number)}
+                              ، آیه{' '}
+                              {campaign.current_verse_number > 1
+                                ? campaign.current_verse_number - 1
+                                : campaign.current_verse_number}
+                            </span>
+                          </div>
+                        )}
 
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <BookMarked className="w-4 h-4" />

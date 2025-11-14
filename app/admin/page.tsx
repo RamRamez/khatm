@@ -1,26 +1,32 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { Plus, BookOpen } from 'lucide-react';
-import CampaignList from "@/components/campaign-list";
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { Plus, BookOpen } from 'lucide-react'
+import CampaignList from '@/components/campaign-list'
 
 export default async function AdminDashboard() {
-  const supabase = await createClient();
-  
+  const supabase = await createClient()
+
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/admin/login");
+    redirect('/admin/login')
   }
 
   const { data: campaigns } = await supabase
-    .from("campaigns")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .from('campaigns')
+    .select('*')
+    .order('created_at', { ascending: false })
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
@@ -71,5 +77,5 @@ export default async function AdminDashboard() {
         <CampaignList campaigns={campaigns || []} />
       </div>
     </div>
-  );
+  )
 }

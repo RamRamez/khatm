@@ -6,7 +6,13 @@ import { createBrowserClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import Link from 'next/link'
 
 export default function AdminSignupPage() {
@@ -39,7 +45,9 @@ export default function AdminSignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/admin`,
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
+            `${window.location.origin}/admin`,
         },
       })
 
@@ -47,21 +55,21 @@ export default function AdminSignupPage() {
 
       if (data.user) {
         // Create admin record
-        const { error: adminError } = await supabase
-          .from('admins')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-          })
+        const { error: adminError } = await supabase.from('admins').insert({
+          id: data.user.id,
+          email: data.user.email,
+        })
 
         if (adminError) {
           console.error('Error creating admin record:', adminError)
         }
 
-        router.push('/admin/login?message=ثبت‌نام با موفقیت انجام شد. لطفاً وارد شوید')
+        router.push(
+          '/admin/login?message=ثبت‌نام با موفقیت انجام شد. لطفاً وارد شوید'
+        )
       }
-    } catch (error: any) {
-      setError(error.message || 'خطایی رخ داد')
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'خطایی رخ داد')
     } finally {
       setLoading(false)
     }
@@ -81,14 +89,14 @@ export default function AdminSignupPage() {
                 {error}
               </div>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">ایمیل</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 disabled={loading}
               />
@@ -100,7 +108,7 @@ export default function AdminSignupPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 disabled={loading}
                 minLength={6}
@@ -113,7 +121,7 @@ export default function AdminSignupPage() {
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={e => setConfirmPassword(e.target.value)}
                 required
                 disabled={loading}
                 minLength={6}
@@ -126,7 +134,10 @@ export default function AdminSignupPage() {
 
             <div className="text-center text-sm text-muted-foreground">
               حساب کاربری دارید؟{' '}
-              <Link href="/admin/login" className="text-emerald-600 hover:underline">
+              <Link
+                href="/admin/login"
+                className="text-emerald-600 hover:underline"
+              >
                 ورود
               </Link>
             </div>

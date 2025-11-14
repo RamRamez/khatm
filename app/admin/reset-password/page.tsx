@@ -1,48 +1,54 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from 'next/navigation';
-import { BookOpen } from 'lucide-react';
+import { useState } from 'react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { BookOpen } from 'lucide-react'
 
 export default function ResetPasswordPage() {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const router = useRouter();
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
   async function handleUpdatePassword(e: React.FormEvent) {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (password !== confirmPassword) {
-      setError("رمز عبور و تکرار آن یکسان نیستند");
-      return;
+      setError('رمز عبور و تکرار آن یکسان نیستند')
+      return
     }
 
     if (password.length < 6) {
-      setError("رمز عبور باید حداقل 6 کاراکتر باشد");
-      return;
+      setError('رمز عبور باید حداقل 6 کاراکتر باشد')
+      return
     }
 
-    setLoading(true);
-    setError("");
+    setLoading(true)
+    setError('')
 
-    const supabase = createClient();
+    const supabase = createClient()
     const { error: updateError } = await supabase.auth.updateUser({
       password: password,
-    });
+    })
 
     if (updateError) {
-      setError("خطایی رخ داد. لطفا دوباره تلاش کنید");
-      setLoading(false);
+      setError('خطایی رخ داد. لطفا دوباره تلاش کنید')
+      setLoading(false)
     } else {
-      router.push("/admin");
-      router.refresh();
+      router.push('/admin')
+      router.refresh()
     }
   }
 
@@ -71,7 +77,7 @@ export default function ResetPasswordPage() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
                   dir="ltr"
@@ -85,7 +91,7 @@ export default function ResetPasswordPage() {
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={e => setConfirmPassword(e.target.value)}
                   required
                   placeholder="••••••••"
                   dir="ltr"
@@ -100,12 +106,12 @@ export default function ResetPasswordPage() {
               )}
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "در حال تنظیم..." : "تنظیم رمز عبور"}
+                {loading ? 'در حال تنظیم...' : 'تنظیم رمز عبور'}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

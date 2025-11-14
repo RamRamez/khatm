@@ -92,16 +92,23 @@
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
 }
 
 /* Arabic text styling */
 .arabic-text {
-  font-family: 'UthmanTN', 'Traditional Arabic', 'Geeza Pro', 'Arabic Typesetting', serif;
+  font-family:
+    'UthmanTN', 'Traditional Arabic', 'Geeza Pro', 'Arabic Typesetting', serif;
   font-size: 2rem;
   line-height: 2.5;
   text-align: center;
-  font-feature-settings: 'liga' 1, 'calt' 1, 'ccmp' 1, 'curs' 1, 'kern' 1;
+  font-feature-settings:
+    'liga' 1,
+    'calt' 1,
+    'ccmp' 1,
+    'curs' 1,
+    'kern' 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
