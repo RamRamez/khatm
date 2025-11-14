@@ -1,6 +1,7 @@
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import prettier from 'eslint-plugin-prettier';
+import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import importPlugin from 'eslint-plugin-import'
+import prettier from 'eslint-plugin-prettier'
 
 export default [
   {
@@ -21,6 +22,7 @@ export default [
     files: ['**/*.ts', '**/*.tsx'],
     plugins: {
       '@typescript-eslint': typescriptEslint,
+      import: importPlugin,
       prettier,
     },
 
@@ -33,23 +35,40 @@ export default [
         ecmaFeatures: {
           jsx: true,
         },
+        project: './tsconfig.json',
+      },
+    },
+
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+        node: true,
+      },
+      'import/parsers': {
+        '@typescript-eslint/parser': ['.ts', '.tsx'],
       },
     },
 
     rules: {
-      'prettier/prettier': ['error', {
-        "semi": false,
-        "trailingComma": "es5",
-        "singleQuote": true,
-        "printWidth": 80,
-        "tabWidth": 2,
-        "useTabs": false,
-        "arrowParens": "avoid",
-        "endOfLine": "lf",
-        "bracketSpacing": true,
-        "jsxSingleQuote": false,
-        "quoteProps": "as-needed"
-      }],
+      'prettier/prettier': [
+        'error',
+        {
+          semi: false,
+          trailingComma: 'es5',
+          singleQuote: true,
+          printWidth: 80,
+          tabWidth: 2,
+          useTabs: false,
+          arrowParens: 'avoid',
+          endOfLine: 'lf',
+          bracketSpacing: true,
+          jsxSingleQuote: false,
+          quoteProps: 'as-needed',
+        },
+      ],
 
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -76,6 +95,49 @@ export default [
           fixStyle: 'inline-type-imports',
         },
       ],
+
+      // Import ordering rules
+      'import/order': [
+        'error',
+        {
+          groups: [
+            'builtin', // Node.js built-in modules
+            'external', // External packages
+            'internal', // Internal modules (@ alias)
+            ['parent', 'sibling'], // Parent and sibling imports
+            'index', // Index imports
+            'object',
+            'type', // Type imports
+          ],
+          pathGroups: [
+            {
+              pattern: 'react',
+              group: 'external',
+              position: 'before',
+            },
+            {
+              pattern: 'next/**',
+              group: 'external',
+              position: 'before',
+            },
+            {
+              pattern: '@/**',
+              group: 'internal',
+              position: 'after',
+            },
+          ],
+          pathGroupsExcludedImportTypes: ['react', 'next'],
+          'newlines-between': 'never',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
+      'import/first': 'error',
+      'import/newline-after-import': 'error',
+      'import/no-duplicates': 'error',
+      'import/no-unresolved': 'off', // TypeScript handles this
     },
   },
-];
+]

@@ -1,6 +1,6 @@
+import { NextResponse } from 'next/server'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
 
 export async function POST(
   _request: Request,

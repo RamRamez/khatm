@@ -1,5 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Plus, BookOpen } from 'lucide-react'
+import CampaignList from '@/components/campaign-list'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -7,10 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { Plus, BookOpen } from 'lucide-react'
-import CampaignList from '@/components/campaign-list'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function AdminDashboard() {
   const supabase = await createClient()

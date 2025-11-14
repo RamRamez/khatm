@@ -1,7 +1,7 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import {
   ArrowRight,
   BookOpen,
@@ -12,8 +12,8 @@ import {
   Share2,
   Volume2,
 } from 'lucide-react'
-import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 interface Verse {
   surah: number

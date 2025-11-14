@@ -1,6 +1,6 @@
+import { notFound } from 'next/navigation'
 import CampaignReader from '@/components/campaign-reader'
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0

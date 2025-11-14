@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { BookMarked, BookOpen, Calendar, Settings } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,8 +11,6 @@ import {
 } from '@/components/ui/card'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { createClient } from '@/lib/supabase/server'
-import { BookMarked, BookOpen, Calendar, Settings } from 'lucide-react'
-import Link from 'next/link'
 
 export default async function HomePage() {
   const supabase = await createClient()

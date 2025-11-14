@@ -1,7 +1,7 @@
-import Footer from '@/components/ui/footer'
-import { Analytics } from '@vercel/analytics/next'
-import type { Metadata } from 'next'
 import { Vazirmatn } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import Footer from '@/components/ui/footer'
+import type { Metadata } from 'next'
 import './globals.css'
 
 const vazirmatn = Vazirmatn({

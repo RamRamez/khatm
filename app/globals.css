@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -49,7 +49,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-vazirmatn), 'Vazirmatn', system-ui, sans-serif;
+  --font-sans: var(--font-vazirmatn), "Vazirmatn", system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -87,8 +87,8 @@
 
 /* Custom font face for Uthman Taha Naskh font */
 @font-face {
-  font-family: 'UthmanTN';
-  src: url('/fonts/QuranTaha.ttf') format('truetype');
+  font-family: "UthmanTN";
+  src: url("/fonts/QuranTaha.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -99,16 +99,16 @@
 /* Arabic text styling */
 .arabic-text {
   font-family:
-    'UthmanTN', 'Traditional Arabic', 'Geeza Pro', 'Arabic Typesetting', serif;
+    "UthmanTN", "Traditional Arabic", "Geeza Pro", "Arabic Typesetting", serif;
   font-size: 2rem;
   line-height: 2.5;
   text-align: center;
   font-feature-settings:
-    'liga' 1,
-    'calt' 1,
-    'ccmp' 1,
-    'curs' 1,
-    'kern' 1;
+    "liga" 1,
+    "calt" 1,
+    "ccmp" 1,
+    "curs" 1,
+    "kern" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
