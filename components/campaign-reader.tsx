@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 
 interface Verse {
   surah: number
@@ -55,8 +56,10 @@ export default function CampaignReader({
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioLoading, setAudioLoading] = useState(false)
   const [shareSuccess, setShareSuccess] = useState(false)
+  const [continuousPlay, setContinuousPlay] = useState(false)
   const hasLoadedInitialVerse = useRef(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const shouldAutoPlayRef = useRef(false)
 
   useEffect(() => {
     // Only load verse if campaign is active
@@ -68,6 +71,24 @@ export default function CampaignReader({
 
     loadNextVerse()
   }, [campaign.is_active])
+
+  // Auto-play verse when loaded in continuous mode
+  useEffect(() => {
+    if (
+      currentVerse &&
+      !loading &&
+      shouldAutoPlayRef.current &&
+      continuousPlay &&
+      audioRef.current
+    ) {
+      shouldAutoPlayRef.current = false
+      // Small delay to ensure audio is ready
+      const timer = setTimeout(() => {
+        toggleAudio()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [currentVerse, loading, continuousPlay])
 
   // Stop and cleanup audio when verse changes
   const stopAudio = () => {
@@ -274,6 +295,7 @@ export default function CampaignReader({
               <p
                 className="arabic-text text-4xl md:text-5xl leading-relaxed mb-4"
                 dir="rtl"
+                lang="ar"
               >
                 {currentVerse.arabic}
               </p>
@@ -283,7 +305,15 @@ export default function CampaignReader({
                 <audio
                   ref={audioRef}
                   src={`https://everyayah.com/data/Alafasy_128kbps/${currentVerse.surah.toString().padStart(3, '0')}${currentVerse.verse.toString().padStart(3, '0')}.mp3`}
-                  onEnded={() => setIsPlaying(false)}
+                  onEnded={() => {
+                    setIsPlaying(false)
+                    // Auto-load next verse in continuous mode
+                    if (continuousPlay) {
+                      setHasRead(true)
+                      shouldAutoPlayRef.current = true
+                      loadNextVerse()
+                    }
+                  }}
                   onLoadStart={() => setAudioLoading(true)}
                   onCanPlay={() => setAudioLoading(false)}
                   onError={e => {
@@ -318,6 +348,24 @@ export default function CampaignReader({
                     </>
                   )}
                 </Button>
+
+                {/* Continuous Play Checkbox */}
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="continuous-play"
+                    checked={continuousPlay}
+                    onChange={e => setContinuousPlay(e.target.checked)}
+                    className="w-4 h-4 cursor-pointer accent-primary"
+                  />
+                  <Label
+                    htmlFor="continuous-play"
+                    className="text-sm cursor-pointer"
+                  >
+                    پخش خودکار آیات
+                  </Label>
+                </div>
+
                 <p className="text-xs text-muted-foreground">
                   صدای قاری: مشاری راشد العفاسی
                 </p>
