@@ -37,7 +37,19 @@ export default [
     },
 
     rules: {
-      'prettier/prettier': 'error',
+      'prettier/prettier': ['error', {
+        "semi": false,
+        "trailingComma": "es5",
+        "singleQuote": true,
+        "printWidth": 80,
+        "tabWidth": 2,
+        "useTabs": false,
+        "arrowParens": "avoid",
+        "endOfLine": "lf",
+        "bracketSpacing": true,
+        "jsxSingleQuote": false,
+        "quoteProps": "as-needed"
+      }],
 
       '@typescript-eslint/no-unused-vars': [
         'error',

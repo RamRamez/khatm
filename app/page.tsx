@@ -1,19 +1,19 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { QURAN_SURAHS } from '@/lib/quran-data';
-import { createClient } from '@/lib/supabase/server';
-import { BookMarked, BookOpen, Calendar, Settings } from 'lucide-react';
-import Link from 'next/link';
+} from '@/components/ui/card'
+import { QURAN_SURAHS } from '@/lib/quran-data'
+import { createClient } from '@/lib/supabase/server'
+import { BookMarked, BookOpen, Calendar, Settings } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function HomePage() {
-  const supabase = await createClient();
+  const supabase = await createClient()
 
   // Only show public campaigns on homepage
   const { data: campaigns } = await supabase
@@ -21,26 +21,26 @@ export default async function HomePage() {
     .select('*')
     .eq('is_public', true)
     .order('is_active', { ascending: false })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
 
   // Check if user is authenticated
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
   // Helper functions
   function formatDate(dateString: string) {
-    const date = new Date(dateString);
+    const date = new Date(dateString)
     return new Intl.DateTimeFormat('fa-IR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }).format(date);
+    }).format(date)
   }
 
   function getSurahName(surahNumber: number) {
-    const surah = QURAN_SURAHS.find(s => s.number === surahNumber);
-    return surah?.persianName || '';
+    const surah = QURAN_SURAHS.find(s => s.number === surahNumber)
+    return surah?.persianName || ''
   }
 
   return (
@@ -169,5 +169,5 @@ export default async function HomePage() {
         )}
       </div>
     </div>
-  );
+  )
 }
