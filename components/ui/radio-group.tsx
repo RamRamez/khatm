@@ -3,7 +3,7 @@
 import {
   forwardRef,
   type ComponentPropsWithoutRef,
-  type ElementRef,
+  type ComponentRef,
 } from 'react'
 import {
   Indicator as RadioGroupIndicator,
@@ -14,7 +14,7 @@ import { Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const RadioGroup = forwardRef<
-  ElementRef<typeof RadioGroupRoot>,
+  ComponentRef<typeof RadioGroupRoot>,
   ComponentPropsWithoutRef<typeof RadioGroupRoot>
 >(({ className, ...props }, ref) => {
   return (
@@ -29,7 +29,7 @@ const RadioGroup = forwardRef<
 RadioGroup.displayName = RadioGroupRoot.displayName
 
 const RadioGroupItem = forwardRef<
-  ElementRef<typeof RadioGroupItemPrimitive>,
+  ComponentRef<typeof RadioGroupItemPrimitive>,
   ComponentPropsWithoutRef<typeof RadioGroupItemPrimitive>
 >(({ className, ...props }, ref) => {
   return (
