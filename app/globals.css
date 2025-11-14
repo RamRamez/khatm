@@ -85,21 +85,18 @@
   }
 }
 
-/* Custom font face for Uthman Taha Naskh font */
-@font-face {
-  font-family: "UthmanTN";
-  src: url("/fonts/QuranTaha.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-  unicode-range:
-    U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
-}
-
-/* Arabic text styling */
+/* Arabic verse styling */
 .arabic-text {
   font-family:
-    "UthmanTN", "Traditional Arabic", "Geeza Pro", "Arabic Typesetting", serif;
+    var(--font-quran-uthmanic),
+    var(--font-noto-naskh),
+    "Noto Naskh Arabic",
+    "Scheherazade New",
+    "Amiri",
+    "Traditional Arabic",
+    "Geeza Pro",
+    "Arabic Typesetting",
+    serif;
   font-size: 2rem;
   line-height: 2.5;
   text-align: center;
@@ -107,8 +104,10 @@
     "liga" 1,
     "calt" 1,
     "ccmp" 1,
-    "curs" 1,
+    "mark" 1,
+    "mkmk" 1,
     "kern" 1;
+  font-variant-ligatures: contextual;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
