@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, BookOpen, Check, Pause, Play, Settings, Volume2 } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, Pause, Play, Settings, Share2, Volume2 } from 'lucide-react';
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
@@ -30,16 +30,20 @@ export default function CampaignReader({
   const [currentCompletionCount, setCurrentCompletionCount] = useState(completionCount);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
   const hasLoadedInitialVerse = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // Only load verse if campaign is active
+    if (!campaign.is_active) return;
+
     // Prevent double-call in React Strict Mode (development)
     if (hasLoadedInitialVerse.current) return;
     hasLoadedInitialVerse.current = true;
 
     loadNextVerse();
-  }, []);
+  }, [campaign.is_active]);
 
   // Stop and cleanup audio when verse changes
   const stopAudio = () => {
@@ -126,6 +130,34 @@ export default function CampaignReader({
     setHasRead(true);
   }
 
+  async function handleShare() {
+    // Get current URL from browser
+    const campaignUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+    const shareData = {
+      title: `کمپین ${campaign.name}`,
+      text: `در کمپین "${campaign.name}" شرکت کنید و با خواندن آیات قرآن کریم به ختم جمعی کمک کنید`,
+      url: campaignUrl,
+    };
+
+    try {
+      // Check if Web Share API is available
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 2000);
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(campaignUrl);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 2000);
+      }
+    } catch (err) {
+      // User cancelled or error occurred
+      console.error('Error sharing:', err);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4 py-8">
@@ -168,7 +200,19 @@ export default function CampaignReader({
         </div>
 
         {/* Verse Display */}
-        {loading ? (
+        {!campaign.is_active ? (
+          <Card className="p-6 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <BookOpen className="w-12 h-12 text-muted-foreground" />
+              <p className="text-muted-foreground text-lg">
+                این کمپین به پایان رسیده است
+              </p>
+              <p className="text-sm text-muted-foreground">
+                تعداد ختم انجام شده: {currentCompletionCount} بار
+              </p>
+            </div>
+          </Card>
+        ) : loading ? (
           <Card className="p-6 text-center">
             <div className="flex flex-col items-center gap-3">
               <BookOpen className="w-12 h-12 text-primary animate-pulse" />
@@ -272,6 +316,19 @@ export default function CampaignReader({
             </div>
           </Card>
         ) : null}
+
+        {/* Share Button */}
+        <div className="mt-6 flex justify-center">
+          <Button
+            onClick={handleShare}
+            variant="outline"
+            size="lg"
+            className="gap-2"
+          >
+            <Share2 className="w-5 h-5" />
+            {shareSuccess ? "لینک کپی شد!" : "اشتراک‌گذاری کمپین"}
+          </Button>
+        </div>
       </div>
     </div>
   );
