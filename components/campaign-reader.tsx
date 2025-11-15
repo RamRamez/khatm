@@ -272,15 +272,6 @@ export default function CampaignReader({
               </p>
             </div>
           </Card>
-        ) : loading ? (
-          <Card className="p-6 text-center">
-            <div className="flex flex-col items-center gap-3">
-              <BookOpen className="w-12 h-12 text-primary animate-pulse" />
-              <p className="text-muted-foreground text-lg">
-                در حال بارگذاری آیه...
-              </p>
-            </div>
-          </Card>
         ) : currentVerse ? (
           <Card className="p-6 md:p-8">
             {/* Surah and Verse number */}
@@ -292,14 +283,22 @@ export default function CampaignReader({
 
             {/* Arabic Text with Audio Player */}
             <div className="mb-6 text-center">
-              <p
-                className="arabic-text text-4xl md:text-5xl leading-relaxed mb-4"
-                dir="rtl"
-                lang="ar"
-              >
-                {currentVerse.arabic}
-              </p>
-
+              {loading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <BookOpen className="w-12 h-12 text-primary animate-pulse" />
+                  <p className="text-muted-foreground text-lg">
+                    در حال بارگذاری آیه...
+                  </p>
+                </div>
+              ) : (
+                <p
+                  className="arabic-text text-4xl md:text-5xl leading-relaxed mb-4"
+                  dir="rtl"
+                  lang="ar"
+                >
+                  {currentVerse.arabic}
+                </p>
+              )}
               {/* Audio Controls */}
               <div className="flex flex-col items-center gap-3 mt-4">
                 <audio
@@ -377,9 +376,18 @@ export default function CampaignReader({
               <h3 className="text-xl font-semibold mb-3 text-center text-primary">
                 ترجمه (فولادوند):
               </h3>
-              <p className="text-lg md:text-xl leading-relaxed text-center max-w-4xl mx-auto">
-                {currentVerse.translation}
-              </p>
+              {loading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <BookOpen className="w-12 h-12 text-primary animate-pulse" />
+                  <p className="text-muted-foreground text-lg">
+                    در حال بارگذاری ترجمه...
+                  </p>
+                </div>
+              ) : (
+                <p className="text-lg md:text-xl leading-relaxed text-center max-w-4xl mx-auto">
+                  {currentVerse.translation}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
