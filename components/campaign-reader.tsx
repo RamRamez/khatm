@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { getDuaByKey } from '@/lib/dua-data'
+import { QURAN_SURAHS } from '@/lib/quran-data'
 import { CampaignType, type Campaign } from '@/lib/types'
 
 type Content =
@@ -50,6 +51,9 @@ export default function CampaignReader({
     useState(completionCount)
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioLoading, setAudioLoading] = useState(false)
+  const [countFlash, setCountFlash] = useState(false)
+  const [nextPulse, setNextPulse] = useState(false)
+  const [nextBgFlash, setNextBgFlash] = useState(false)
   const [shareSuccess, setShareSuccess] = useState(false)
   const [continuousPlay, setContinuousPlay] = useState(false)
   const hasLoadedInitialContent = useRef(false)
@@ -79,6 +83,14 @@ export default function CampaignReader({
     }
   }, [currentContent, loading, continuousPlay])
 
+  useEffect(() => {
+    if (!loading) {
+      setCountFlash(true)
+      const t = setTimeout(() => setCountFlash(false), 600)
+      return () => clearTimeout(t)
+    }
+  }, [currentCompletionCount, loading])
+
   const stopAudio = () => {
     if (audioRef.current) {
       audioRef.current.pause()
@@ -107,9 +119,126 @@ export default function CampaignReader({
     }
   }
 
+  // Compute the next verse locally to show it optimistically.
+  const getOptimisticQuran = (): {
+    surah: number
+    verse: number
+    completionBump: boolean
+  } | null => {
+    if (!currentContent || currentContent.kind !== 'quran') return null
+    const currentSurah = currentContent.surah
+    const currentVerse = currentContent.verse
+    const surahInfo = QURAN_SURAHS.find(s => s.number === currentSurah)
+    if (!surahInfo) return null
+
+    let nextSurah = currentSurah
+    let nextVerse = currentVerse + 1
+    let completionBump = false
+
+    if (nextVerse > surahInfo.verses) {
+      if (campaign.type === CampaignType.Surah) {
+        // Reset to the same surah, bump completion
+        nextSurah = campaign.surah_number ?? currentSurah
+        nextVerse = 1
+        completionBump = true
+      } else {
+        // General campaign goes to next surah
+        nextSurah = currentSurah + 1
+        if (nextSurah > 114) {
+          nextSurah = 1
+          completionBump = true
+        }
+        nextVerse = 1
+      }
+    }
+
+    return { surah: nextSurah, verse: nextVerse, completionBump }
+  }
+
+  const getOptimisticDua = (): Content | null => {
+    if (campaign.type !== CampaignType.Dua) return null
+    const dua = getDuaByKey(campaign.dua_key)
+    if (!dua) return null
+
+    const totalItems = 1
+    const nextIndex =
+      currentContent && currentContent.kind === 'dua'
+        ? (currentContent.itemIndex % totalItems || 0) + 1
+        : 1
+
+    return {
+      kind: 'dua',
+      title: dua.title,
+      arabic: dua.arabic,
+      translation: dua.translation,
+      audioUrl: dua.audioUrl || null,
+      itemIndex: nextIndex,
+      totalItems,
+    }
+  }
+
+  const fetchAyahText = async (surahNumber: number, verseNumber: number) => {
+    const [arabicResponse, persianResponse] = await Promise.all([
+      fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}`),
+      fetch(
+        `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}/fa.fooladvand`,
+      ),
+    ])
+    const arabicData = await arabicResponse.json()
+    const persianData = await persianResponse.json()
+    return {
+      arabic: arabicData.data.text,
+      translation: persianData.data.text,
+    }
+  }
+
   async function loadNextItem() {
+    setNextPulse(true)
+    setTimeout(() => setNextPulse(false), 350)
+    setNextBgFlash(true)
+    setTimeout(() => setNextBgFlash(false), 300)
     setLoading(true)
     stopAudio()
+
+    const previousContent = currentContent
+    const previousCompletion = currentCompletionCount
+
+    // Show an optimistic next verse/item immediately if we can compute it.
+    let optimisticContent: Content | null = null
+    let optimisticCompletionBump = false
+
+    if (campaign.type === CampaignType.Dua) {
+      optimisticContent = getOptimisticDua()
+      if (optimisticContent) {
+        setCurrentContent(optimisticContent)
+        setLoading(false)
+      }
+    } else {
+      const optimisticQuran = getOptimisticQuran()
+      if (optimisticQuran) {
+        optimisticCompletionBump = optimisticQuran.completionBump
+        try {
+          const text = await fetchAyahText(
+            optimisticQuran.surah,
+            optimisticQuran.verse,
+          )
+          optimisticContent = {
+            kind: 'quran',
+            surah: optimisticQuran.surah,
+            verse: optimisticQuran.verse,
+            arabic: text.arabic,
+            translation: text.translation,
+          }
+          setCurrentContent(optimisticContent)
+          if (optimisticCompletionBump) {
+            setCurrentCompletionCount(c => c + 1)
+          }
+          setLoading(false)
+        } catch (err) {
+          console.error('Error fetching optimistic verse:', err)
+        }
+      }
+    }
 
     try {
       const nextResponse = await fetch(
@@ -145,27 +274,33 @@ export default function CampaignReader({
       const surahNumber = nextData.surah_number
       const verseNumber = nextData.verse_number
 
-      const [arabicResponse, persianResponse] = await Promise.all([
-        fetch(
-          `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}`,
-        ),
-        fetch(
-          `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}/fa.fooladvand`,
-        ),
-      ])
+      const isSameAsOptimistic =
+        optimisticContent &&
+        optimisticContent.kind === 'quran' &&
+        optimisticContent.surah === surahNumber &&
+        optimisticContent.verse === verseNumber
 
-      const arabicData = await arabicResponse.json()
-      const persianData = await persianResponse.json()
+      if (isSameAsOptimistic && optimisticContent) {
+        // Keep the optimistic content, just clear the loading state
+        setLoading(false)
+        return
+      }
 
+      const text = await fetchAyahText(surahNumber, verseNumber)
       setCurrentContent({
         kind: 'quran',
         surah: surahNumber,
         verse: verseNumber,
-        arabic: arabicData.data.text,
-        translation: persianData.data.text,
+        arabic: text.arabic,
+        translation: text.translation,
       })
     } catch (error) {
       console.error('Error loading content:', error)
+      // Roll back optimistic UI if the call failed
+      if (previousContent) {
+        setCurrentContent(previousContent)
+      }
+      setCurrentCompletionCount(previousCompletion)
     } finally {
       setLoading(false)
     }
@@ -233,8 +368,16 @@ export default function CampaignReader({
                       : getDuaByKey(campaign.dua_key)?.title}
                 </p>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-1">
+              <div
+                className={`text-center rounded-lg px-3 py-2 transition-colors duration-700 ${
+                  countFlash ? 'bg-primary/15' : 'bg-transparent'
+                }`}
+              >
+                <div
+                  className={`text-3xl font-bold text-primary mb-1 transition-transform ${
+                    countFlash ? 'scale-110 animate-pulse' : ''
+                  }`}
+                >
                   {currentCompletionCount}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -397,10 +540,16 @@ export default function CampaignReader({
               <Button
                 onClick={loadNextItem}
                 size="lg"
-                className="w-full sm:w-auto text-lg h-14 px-8"
+                className={`w-full sm:w-auto text-lg h-14 px-8 transition duration-1000 shadow-[0_18px_48px_rgba(59,130,246,0.35)] active:shadow-[0_28px_72px_rgba(59,130,246,0.55)] active:-translate-y-0.5 bg-primary text-primary-foreground hover:bg-primary/90 ${
+                  nextBgFlash ? 'bg-white text-primary' : ''
+                }`}
                 variant="default"
               >
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight
+                  className={`w-5 h-5 ml-2 transition-transform ${
+                    nextPulse ? '-translate-x-1 animate-pulse' : ''
+                  }`}
+                />
                 بعدی
               </Button>
             </div>
