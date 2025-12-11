@@ -12,7 +12,7 @@ export function slugify(text: string): string {
       // Remove special characters except Persian/Arabic, alphanumeric, and hyphens
       .replace(
         /[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFFa-zA-Z0-9\-]/g,
-        ''
+        '',
       )
       // Replace multiple hyphens with single hyphen
       .replace(/-+/g, '-')
@@ -27,7 +27,7 @@ export function slugify(text: string): string {
  */
 export async function generateUniqueSlug(
   baseText: string,
-  checkExists: (slug: string) => Promise<boolean>
+  checkExists: (slug: string) => Promise<boolean>,
 ): Promise<string> {
   const baseSlug = slugify(baseText)
   let slug = baseSlug

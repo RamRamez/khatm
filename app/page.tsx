@@ -9,8 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { getDuaByKey } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { createClient } from '@/lib/supabase/server'
+import { CampaignType } from '@/lib/types'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -66,11 +68,10 @@ export default async function HomePage() {
             </div>
           </div>
           <h1 className="text-5xl font-bold mb-4 text-foreground">
-            ختم قرآن کریم
+            کمپین‌های آسمانی
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            در کمپین های ختم قرآن شرکت کنید و با خواندن آیات قرآن کریم به ختم
-            جمعی کمک کنید
+            مشارکت در کمپین‌های ختم جمعی قرآن یا دعا
           </p>
         </div>
 
@@ -92,10 +93,12 @@ export default async function HomePage() {
                     </Badge>
                   </div>
                   <CardDescription className="text-base">
-                    {campaign.type === 'general' ? (
+                    {campaign.type === CampaignType.General ? (
                       <span>ختم کامل قرآن کریم</span>
-                    ) : (
+                    ) : campaign.type === CampaignType.Surah ? (
                       <span>سوره {campaign.surah_name}</span>
+                    ) : (
+                      <span>{getDuaByKey(campaign.dua_key)?.title}</span>
                     )}
                   </CardDescription>
                 </CardHeader>

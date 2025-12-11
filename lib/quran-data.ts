@@ -1,3 +1,5 @@
+import { CampaignType } from './types'
+
 // Quran Surahs data for the app
 export const QURAN_SURAHS = [
   { number: 1, name: 'الفاتحة', persianName: 'فاتحه', verses: 7 },
@@ -120,11 +122,15 @@ export const TOTAL_QURAN_VERSES = 6236
 
 // Get total verses for a campaign
 export function getTotalVersesForCampaign(
-  type: 'general' | 'surah',
-  surahNumber?: number
+  type: CampaignType,
+  surahNumber?: number,
 ): number {
-  if (type === 'general') {
+  if (type === CampaignType.General) {
     return TOTAL_QURAN_VERSES
+  }
+
+  if (type === CampaignType.Dua) {
+    return 0
   }
 
   const surah = QURAN_SURAHS.find(s => s.number === surahNumber)

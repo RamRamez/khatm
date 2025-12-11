@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-6">
         <div className="text-center text-sm text-muted-foreground">
           <p>
-            سازنده:{' '}
+            ارتباط:{' '}
             <a
               href="mailto:raminramazanpour@gmail.com"
               className="text-primary hover:underline"

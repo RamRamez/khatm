@@ -65,7 +65,7 @@ export default function AdminSignupPage() {
         }
 
         router.push(
-          '/admin/login?message=ثبت‌نام با موفقیت انجام شد. لطفاً وارد شوید'
+          '/admin/login?message=ثبت‌نام با موفقیت انجام شد. لطفاً وارد شوید',
         )
       }
     } catch (error: unknown) {

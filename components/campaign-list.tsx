@@ -22,22 +22,23 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { getDuaByKey } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { createClient } from '@/lib/supabase/client'
-import { type Campaign } from './campaign-reader'
+import { CampaignType, type Campaign } from '@/lib/types'
 
 export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(
-    null
+    null,
   )
   const [copiedCampaignId, setCopiedCampaignId] = useState<string | null>(null)
 
   async function toggleCampaignStatus(
     campaignId: string,
-    currentStatus: boolean
+    currentStatus: boolean,
   ) {
     setLoading(campaignId)
     const supabase = createClient()
@@ -74,7 +75,7 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
     if (error) {
       console.error('Error deleting campaign:', error)
       alert(
-        `خطا در حذف کمپین: ${error.message}\n\nلطفا مطمئن شوید که دسترسی های پایگاه داده را اعمال کرده اید.`
+        `خطا در حذف کمپین: ${error.message}\n\nلطفا مطمئن شوید که دسترسی های پایگاه داده را اعمال کرده اید.`,
       )
       return
     }
@@ -128,10 +129,12 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
               <div className="flex-1">
                 <CardTitle className="text-2xl mb-2">{campaign.name}</CardTitle>
                 <CardDescription>
-                  {campaign.type === 'general' ? (
+                  {campaign.type === CampaignType.General ? (
                     <span>ختم کامل قرآن کریم</span>
-                  ) : (
+                  ) : campaign.type === CampaignType.Surah ? (
                     <span>سوره {campaign.surah_name}</span>
+                  ) : (
+                    <span>{getDuaByKey(campaign.dua_key)?.title}</span>
                   )}
                 </CardDescription>
               </div>

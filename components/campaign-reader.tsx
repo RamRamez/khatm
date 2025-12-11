@@ -5,7 +5,6 @@ import Link from 'next/link'
 import {
   ArrowRight,
   BookOpen,
-  Check,
   Pause,
   Play,
   Settings,
@@ -15,29 +14,26 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { getDuaByKey } from '@/lib/dua-data'
+import { CampaignType, type Campaign } from '@/lib/types'
 
-interface Verse {
-  surah: number
-  verse: number
-  arabic: string
-  translation: string
-}
-
-export interface Campaign {
-  id: string
-  name: string
-  slug: string
-  type: 'general' | 'surah'
-  surah_number?: number | null
-  surah_name?: string | null
-  is_active: boolean
-  completion_count: number | null
-  current_surah_number?: number | null
-  current_verse_number?: number | null
-  created_at?: string
-  updated_at?: string
-  is_public: boolean
-}
+type Content =
+  | {
+      kind: 'quran'
+      surah: number
+      verse: number
+      arabic: string
+      translation: string
+    }
+  | {
+      kind: 'dua'
+      title: string
+      arabic: string
+      translation: string
+      audioUrl?: string | null
+      itemIndex: number
+      totalItems: number
+    }
 
 export default function CampaignReader({
   campaign,
@@ -48,49 +44,41 @@ export default function CampaignReader({
   completionCount: number
   isAdmin?: boolean
 }) {
-  const [currentVerse, setCurrentVerse] = useState<Verse | null>(null)
+  const [currentContent, setCurrentContent] = useState<Content | null>(null)
   const [loading, setLoading] = useState(true)
-  const [hasRead, setHasRead] = useState(false)
   const [currentCompletionCount, setCurrentCompletionCount] =
     useState(completionCount)
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioLoading, setAudioLoading] = useState(false)
   const [shareSuccess, setShareSuccess] = useState(false)
   const [continuousPlay, setContinuousPlay] = useState(false)
-  const hasLoadedInitialVerse = useRef(false)
+  const hasLoadedInitialContent = useRef(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const shouldAutoPlayRef = useRef(false)
 
   useEffect(() => {
-    // Only load verse if campaign is active
     if (!campaign.is_active) return
-
-    // Prevent double-call in React Strict Mode (development)
-    if (hasLoadedInitialVerse.current) return
-    hasLoadedInitialVerse.current = true
-
-    loadNextVerse()
+    if (hasLoadedInitialContent.current) return
+    hasLoadedInitialContent.current = true
+    loadNextItem()
   }, [campaign.is_active])
 
-  // Auto-play verse when loaded in continuous mode
   useEffect(() => {
     if (
-      currentVerse &&
+      currentContent &&
       !loading &&
       shouldAutoPlayRef.current &&
       continuousPlay &&
       audioRef.current
     ) {
       shouldAutoPlayRef.current = false
-      // Small delay to ensure audio is ready
       const timer = setTimeout(() => {
         toggleAudio()
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [currentVerse, loading, continuousPlay])
+  }, [currentContent, loading, continuousPlay])
 
-  // Stop and cleanup audio when verse changes
   const stopAudio = () => {
     if (audioRef.current) {
       audioRef.current.pause()
@@ -99,9 +87,9 @@ export default function CampaignReader({
     setIsPlaying(false)
   }
 
-  // Toggle audio playback
   const toggleAudio = async () => {
-    if (!audioRef.current || !currentVerse) return
+    if (!audioRef.current || !currentContent) return
+    if (currentContent.kind === 'dua' && !currentContent.audioUrl) return
 
     if (isPlaying) {
       audioRef.current.pause()
@@ -119,94 +107,91 @@ export default function CampaignReader({
     }
   }
 
-  async function loadNextVerse() {
+  async function loadNextItem() {
     setLoading(true)
-    setHasRead(false)
     stopAudio()
 
     try {
-      // Get the next sequential verse from the API and increment position
-      const nextVerseResponse = await fetch(
+      const nextResponse = await fetch(
         `/api/campaigns/${campaign.slug}/next-verse`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+          headers: { 'Content-Type': 'application/json' },
+        },
       )
-      const nextVerseData = await nextVerseResponse.json()
+      const nextData = await nextResponse.json()
 
-      if (!nextVerseResponse.ok || !nextVerseData) {
-        throw new Error('Failed to get next verse')
+      if (!nextResponse.ok || !nextData) {
+        throw new Error('Failed to get next content')
       }
 
-      const surahNumber = nextVerseData.surah_number
-      const verseNumber = nextVerseData.verse_number
-
-      // Update completion count if it changed
-      if (nextVerseData.completion_count !== undefined) {
-        setCurrentCompletionCount(nextVerseData.completion_count)
+      if (nextData.completion_count !== undefined) {
+        setCurrentCompletionCount(nextData.completion_count)
       }
 
-      // Fetch the verse in Arabic and Persian
+      if (campaign.type === CampaignType.Dua) {
+        setCurrentContent({
+          kind: 'dua',
+          title: nextData.title || 'دعای انتخاب شده',
+          arabic: nextData.arabic,
+          translation: nextData.translation,
+          audioUrl: nextData.audio_url || null,
+          itemIndex: nextData.item_index || 1,
+          totalItems: nextData.total_items || 1,
+        })
+        return
+      }
+
+      const surahNumber = nextData.surah_number
+      const verseNumber = nextData.verse_number
+
       const [arabicResponse, persianResponse] = await Promise.all([
         fetch(
-          `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}`
+          `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}`,
         ),
         fetch(
-          `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}/fa.fooladvand`
+          `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}/fa.fooladvand`,
         ),
       ])
 
       const arabicData = await arabicResponse.json()
       const persianData = await persianResponse.json()
 
-      setCurrentVerse({
+      setCurrentContent({
+        kind: 'quran',
         surah: surahNumber,
         verse: verseNumber,
         arabic: arabicData.data.text,
         translation: persianData.data.text,
       })
     } catch (error) {
-      console.error('Error loading verse:', error)
+      console.error('Error loading content:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleMarkAsRead() {
-    if (!currentVerse || hasRead) return
-
-    // Just mark as read in UI - position was already incremented when verse was fetched
-    setHasRead(true)
-  }
-
   async function handleShare() {
-    // Get current URL from browser
     const campaignUrl =
       typeof window !== 'undefined' ? window.location.href : ''
 
     const shareData = {
       title: `کمپین ${campaign.name}`,
-      text: `در کمپین "${campaign.name}" شرکت کنید و با خواندن آیات قرآن کریم به ختم جمعی کمک کنید`,
+      text: `در کمپین "${campaign.name}" شرکت کنید و با قرائت کمک کنید`,
       url: campaignUrl,
     }
 
     try {
-      // Check if Web Share API is available
       if (navigator.share) {
         await navigator.share(shareData)
         setShareSuccess(true)
         setTimeout(() => setShareSuccess(false), 2000)
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(campaignUrl)
         setShareSuccess(true)
         setTimeout(() => setShareSuccess(false), 2000)
       }
     } catch (err) {
-      // User cancelled or error occurred
       console.error('Error sharing:', err)
     }
   }
@@ -214,7 +199,6 @@ export default function CampaignReader({
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4 py-8">
-        {/* Header with completion count */}
         <div className="mb-3">
           <div className="flex items-center justify-between mb-4">
             <Link
@@ -242,9 +226,11 @@ export default function CampaignReader({
                   نام کمپین: {campaign.name}
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {campaign.type === 'general'
+                  {campaign.type === CampaignType.General
                     ? 'ختم کامل قرآن کریم'
-                    : `سوره ${campaign.surah_name}`}
+                    : campaign.type === CampaignType.Surah
+                      ? `سوره ${campaign.surah_name}`
+                      : getDuaByKey(campaign.dua_key)?.title}
                 </p>
               </div>
               <div className="text-center">
@@ -259,7 +245,6 @@ export default function CampaignReader({
           </Card>
         </div>
 
-        {/* Verse Display */}
         {!campaign.is_active ? (
           <Card className="p-6 text-center">
             <div className="flex flex-col items-center gap-3">
@@ -272,16 +257,28 @@ export default function CampaignReader({
               </p>
             </div>
           </Card>
-        ) : currentVerse ? (
+        ) : currentContent ? (
           <Card className="p-6 md:p-8">
-            {/* Surah and Verse number */}
             <div className="text-center mb-4">
-              <p className="text-muted-foreground text-lg">
-                سوره {currentVerse.surah} - آیه {currentVerse.verse}
-              </p>
+              {currentContent.kind === 'quran' ? (
+                <p className="text-muted-foreground text-lg">
+                  سوره {currentContent.surah} - آیه {currentContent.verse}
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-muted-foreground text-lg">
+                    {currentContent.title}
+                  </p>
+                  {currentContent.totalItems > 1 && (
+                    <p className="text-xs text-muted-foreground">
+                      بخش {currentContent.itemIndex} از{' '}
+                      {currentContent.totalItems}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Arabic Text with Audio Player */}
             <div className="mb-6 text-center">
               {loading ? (
                 <div className="flex flex-col items-center gap-3">
@@ -296,85 +293,91 @@ export default function CampaignReader({
                   dir="rtl"
                   lang="ar"
                 >
-                  {currentVerse.arabic}
+                  {currentContent.arabic}
                 </p>
               )}
-              {/* Audio Controls */}
-              <div className="flex flex-col items-center gap-3 mt-4">
-                <audio
-                  ref={audioRef}
-                  src={`https://everyayah.com/data/Alafasy_128kbps/${currentVerse.surah.toString().padStart(3, '0')}${currentVerse.verse.toString().padStart(3, '0')}.mp3`}
-                  onEnded={() => {
-                    setIsPlaying(false)
-                    // Auto-load next verse in continuous mode
-                    if (continuousPlay) {
-                      setHasRead(true)
-                      shouldAutoPlayRef.current = true
-                      loadNextVerse()
+              {currentContent.kind === CampaignType.Dua &&
+              !currentContent.audioUrl ? null : (
+                <div className="flex flex-col items-center gap-3 mt-4">
+                  <audio
+                    ref={audioRef}
+                    src={
+                      currentContent.kind === 'quran'
+                        ? `https://everyayah.com/data/Alafasy_128kbps/${currentContent.surah
+                            .toString()
+                            .padStart(3, '0')}${currentContent.verse
+                            .toString()
+                            .padStart(3, '0')}.mp3`
+                        : currentContent.audioUrl || ''
                     }
-                  }}
-                  onLoadStart={() => setAudioLoading(true)}
-                  onCanPlay={() => setAudioLoading(false)}
-                  onError={e => {
-                    console.error('Error loading audio:', e)
-                    setAudioLoading(false)
-                  }}
-                  preload="metadata"
-                  crossOrigin="anonymous"
-                />
-
-                <Button
-                  onClick={toggleAudio}
-                  variant="outline"
-                  size="lg"
-                  className="gap-2 min-w-[140px]"
-                  disabled={audioLoading}
-                >
-                  {audioLoading ? (
-                    <>
-                      <Volume2 className="w-5 h-5 animate-pulse" />
-                      در حال بارگذاری...
-                    </>
-                  ) : isPlaying ? (
-                    <>
-                      <Pause className="w-5 h-5" />
-                      توقف
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-5 h-5" />
-                      پخش صوت
-                    </>
-                  )}
-                </Button>
-
-                {/* Continuous Play Checkbox */}
-                <div className="flex items-center gap-2 mt-2">
-                  <input
-                    type="checkbox"
-                    id="continuous-play"
-                    checked={continuousPlay}
-                    onChange={e => setContinuousPlay(e.target.checked)}
-                    className="w-4 h-4 cursor-pointer accent-primary"
+                    onEnded={() => {
+                      setIsPlaying(false)
+                      if (continuousPlay) {
+                        shouldAutoPlayRef.current = true
+                        loadNextItem()
+                      }
+                    }}
+                    onLoadStart={() => setAudioLoading(true)}
+                    onCanPlay={() => setAudioLoading(false)}
+                    onError={e => {
+                      console.error('Error loading audio:', e)
+                      setAudioLoading(false)
+                    }}
+                    preload="metadata"
+                    crossOrigin="anonymous"
                   />
-                  <Label
-                    htmlFor="continuous-play"
-                    className="text-sm cursor-pointer"
-                  >
-                    پخش خودکار آیات
-                  </Label>
-                </div>
 
-                <p className="text-xs text-muted-foreground">
-                  صدای قاری: مشاری راشد العفاسی
-                </p>
-              </div>
+                  <Button
+                    onClick={toggleAudio}
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 min-w-[140px]"
+                    disabled={audioLoading}
+                  >
+                    {audioLoading ? (
+                      <>
+                        <Volume2 className="w-5 h-5 animate-pulse" />
+                        در حال بارگذاری...
+                      </>
+                    ) : isPlaying ? (
+                      <>
+                        <Pause className="w-5 h-5" />
+                        توقف
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-5 h-5" />
+                        پخش صوت
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="checkbox"
+                      id="continuous-play"
+                      checked={continuousPlay}
+                      onChange={e => setContinuousPlay(e.target.checked)}
+                      className="w-4 h-4 cursor-pointer accent-primary"
+                    />
+                    <Label
+                      htmlFor="continuous-play"
+                      className="text-sm cursor-pointer"
+                    >
+                      پخش خودکار آیات
+                    </Label>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    صدای قاری: مشاری راشد العفاسی
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Persian Translation */}
             <div className="border-t-2 border-border pt-5 mb-5">
               <h3 className="text-xl font-semibold mb-3 text-center text-primary">
-                ترجمه (فولادوند):
+                ترجمه:
               </h3>
               {loading ? (
                 <div className="flex flex-col items-center gap-3">
@@ -385,38 +388,25 @@ export default function CampaignReader({
                 </div>
               ) : (
                 <p className="text-lg md:text-xl leading-relaxed text-center max-w-4xl mx-auto">
-                  {currentVerse.translation}
+                  {currentContent.translation}
                 </p>
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              {!hasRead ? (
-                <Button
-                  onClick={handleMarkAsRead}
-                  size="lg"
-                  className="w-full sm:w-auto text-lg h-14 px-8"
-                >
-                  <Check className="w-5 h-5 ml-2" />
-                  خواندم
-                </Button>
-              ) : (
-                <Button
-                  onClick={loadNextVerse}
-                  size="lg"
-                  className="w-full sm:w-auto text-lg h-14 px-8"
-                  variant="default"
-                >
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                  آیه بعدی
-                </Button>
-              )}
+              <Button
+                onClick={loadNextItem}
+                size="lg"
+                className="w-full sm:w-auto text-lg h-14 px-8"
+                variant="default"
+              >
+                <ArrowRight className="w-5 h-5 ml-2" />
+                بعدی
+              </Button>
             </div>
           </Card>
         ) : null}
 
-        {/* Share Button */}
         <div className="mt-6 flex justify-center">
           <Button
             onClick={handleShare}

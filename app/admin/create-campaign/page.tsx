@@ -16,14 +16,17 @@ import { Combobox } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { getDuaOptions } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { generateUniqueSlug } from '@/lib/slug'
 import { createClient } from '@/lib/supabase/client'
+import { CampaignType } from '@/lib/types'
 
 export default function CreateCampaignPage() {
   const [name, setName] = useState('')
-  const [type, setType] = useState<'general' | 'surah'>('general')
+  const [type, setType] = useState<CampaignType>(CampaignType.General)
   const [selectedSurah, setSelectedSurah] = useState<string>('')
+  const [selectedDua, setSelectedDua] = useState<string>('')
   const [isPublic, setIsPublic] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -34,6 +37,7 @@ export default function CreateCampaignPage() {
     value: surah.number.toString(),
     label: `${surah.number}. ${surah.persianName} (${surah.name})`,
   }))
+  const duaOptions = getDuaOptions()
 
   async function handleCreateCampaign(e: React.FormEvent) {
     e.preventDefault()
@@ -43,8 +47,13 @@ export default function CreateCampaignPage() {
       return
     }
 
-    if (type === 'surah' && !selectedSurah) {
+    if (type === CampaignType.Surah && !selectedSurah) {
       setError('لطفا یک سوره انتخاب کنید')
+      return
+    }
+
+    if (type === CampaignType.Dua && !selectedDua) {
+      setError('لطفا یک دعا انتخاب کنید')
       return
     }
 
@@ -58,7 +67,9 @@ export default function CreateCampaignPage() {
 
     const surahNumber = selectedSurah ? parseInt(selectedSurah) : null
     const surahData =
-      type === 'surah' ? QURAN_SURAHS.find(s => s.number === surahNumber) : null
+      type === CampaignType.Surah
+        ? QURAN_SURAHS.find(s => s.number === surahNumber)
+        : null
 
     // Generate unique slug
     const slug = await generateUniqueSlug(name.trim(), async checkSlug => {
@@ -74,14 +85,21 @@ export default function CreateCampaignPage() {
       name: name.trim(),
       slug,
       type,
-      surah_number: type === 'surah' ? surahNumber : null,
+      surah_number: type === CampaignType.Surah ? surahNumber : null,
       surah_name: surahData?.persianName || null,
+      dua_key: type === CampaignType.Dua ? selectedDua : null,
       is_active: true,
       is_public: isPublic,
       created_by: user?.id,
       // Set initial position based on campaign type
-      current_surah_number: type === 'surah' ? surahNumber : 1,
-      current_verse_number: 1,
+      current_surah_number:
+        type === CampaignType.Surah
+          ? surahNumber
+          : type === CampaignType.General
+            ? 1
+            : null,
+      current_verse_number: type === CampaignType.Dua ? null : 1,
+      current_dua_index: type === CampaignType.Dua ? 1 : null,
       completion_count: 0,
     })
 
@@ -122,7 +140,7 @@ export default function CreateCampaignPage() {
             <CardHeader>
               <CardTitle>اطلاعات کمپین</CardTitle>
               <CardDescription>
-                اطلاعات کمپین قرآنی خود را وارد کنید
+                اطلاعات کمپین قرائت خود را وارد کنید
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -144,11 +162,11 @@ export default function CreateCampaignPage() {
                   <Label>نوع کمپین</Label>
                   <RadioGroup
                     value={type}
-                    onValueChange={v => setType(v as 'general' | 'surah')}
+                    onValueChange={v => setType(v as CampaignType)}
                   >
                     <div className="flex items-start gap-3">
                       <RadioGroupItem
-                        value="general"
+                        value={CampaignType.General}
                         id="general"
                         className="mt-1"
                       />
@@ -168,7 +186,7 @@ export default function CreateCampaignPage() {
 
                     <div className="flex items-start gap-3">
                       <RadioGroupItem
-                        value="surah"
+                        value={CampaignType.Surah}
                         id="surah"
                         className="mt-1"
                       />
@@ -184,11 +202,30 @@ export default function CreateCampaignPage() {
                         </p>
                       </div>
                     </div>
+
+                    <div className="flex items-start gap-3">
+                      <RadioGroupItem
+                        value={CampaignType.Dua}
+                        id="dua"
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="dua"
+                          className="font-medium cursor-pointer"
+                        >
+                          دعا
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          نمایش و قرائت دعاهای تعریف‌شده مانند صلوات
+                        </p>
+                      </div>
+                    </div>
                   </RadioGroup>
                 </div>
 
                 {/* Surah Selection */}
-                {type === 'surah' && (
+                {type === CampaignType.Surah && (
                   <div className="space-y-2">
                     <Label htmlFor="surah-select">انتخاب سوره</Label>
                     <Combobox
@@ -198,6 +235,22 @@ export default function CreateCampaignPage() {
                       placeholder="یک سوره انتخاب کنید"
                       searchPlaceholder="جستجوی سوره..."
                       emptyText="سوره‌ای یافت نشد"
+                      className="w-full"
+                    />
+                  </div>
+                )}
+
+                {/* Dua Selection */}
+                {type === CampaignType.Dua && (
+                  <div className="space-y-2">
+                    <Label htmlFor="dua-select">انتخاب دعا</Label>
+                    <Combobox
+                      options={duaOptions}
+                      value={selectedDua}
+                      onValueChange={setSelectedDua}
+                      placeholder="یک دعا انتخاب کنید"
+                      searchPlaceholder="جستجوی دعا..."
+                      emptyText="دعایی یافت نشد"
                       className="w-full"
                     />
                   </div>

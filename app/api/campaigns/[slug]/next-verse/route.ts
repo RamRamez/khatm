@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
+import { getDuaByKey } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { createClient } from '@/lib/supabase/server'
+import { CampaignType } from '@/lib/types'
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug: encodedSlug } = await params
   // Decode the slug to handle Persian/Arabic characters
@@ -24,10 +26,49 @@ export async function POST(
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
+    // Handle dua campaigns separately
+    if (campaign.type === CampaignType.Dua) {
+      const dua = getDuaByKey(campaign.dua_key)
+      if (!dua) {
+        return NextResponse.json(
+          { error: 'Dua not found for campaign' },
+          { status: 400 },
+        )
+      }
+
+      const totalItems = 1
+      const currentIndex = campaign.current_dua_index || 1
+      let nextIndex = currentIndex + 1
+      let newCompletionCount = campaign.completion_count || 0
+
+      if (nextIndex > totalItems) {
+        nextIndex = 1
+        newCompletionCount = newCompletionCount + 1
+      }
+
+      await supabase
+        .from('campaigns')
+        .update({
+          current_dua_index: nextIndex,
+          completion_count: newCompletionCount,
+        })
+        .eq('id', campaign.id)
+
+      return NextResponse.json({
+        title: dua.title,
+        arabic: dua.arabic,
+        translation: dua.translation,
+        audio_url: dua.audioUrl || null,
+        item_index: currentIndex,
+        total_items: totalItems,
+        completion_count: newCompletionCount,
+      })
+    }
+
     // Get current position - for surah-based campaigns, default to the campaign's surah
     let currentSurah =
       campaign.current_surah_number ||
-      (campaign.type === 'surah' ? campaign.surah_number : 1)
+      (campaign.type === CampaignType.Surah ? campaign.surah_number : 1)
     let currentVerse = campaign.current_verse_number || 1
 
     // Get the current surah info
@@ -35,7 +76,7 @@ export async function POST(
     if (!surah) {
       return NextResponse.json(
         { error: 'Invalid surah number' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -51,7 +92,7 @@ export async function POST(
     let nextSurah = currentSurah
     let nextVerseNumber = currentVerse + 1
 
-    if (campaign.type === 'general') {
+    if (campaign.type === CampaignType.General) {
       // For general campaigns, iterate through all surahs
       if (nextVerseNumber > surah.verses) {
         // Move to next surah
@@ -128,7 +169,7 @@ export async function POST(
     console.error('Error getting next verse:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

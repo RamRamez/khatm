@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
       email,
       {
         redirectTo: `${window.location.origin}/admin/reset-password`,
-      }
+      },
     )
 
     if (resetError) {
