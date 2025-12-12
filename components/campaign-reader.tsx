@@ -311,8 +311,8 @@ export default function CampaignReader({
       typeof window !== 'undefined' ? window.location.href : ''
 
     const shareData = {
-      title: `کمپین ${campaign.name}`,
-      text: `در کمپین "${campaign.name}" شرکت کنید`,
+      title: `پویش ${campaign.name}`,
+      text: `در پویش "${campaign.name}" شرکت کنید`,
       url: campaignUrl,
     }
 
@@ -358,7 +358,7 @@ export default function CampaignReader({
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-xl font-bold mb-1">
-                  نام کمپین: {campaign.name}
+                  نام پویش: {campaign.name}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {campaign.type === CampaignType.General
@@ -393,7 +393,7 @@ export default function CampaignReader({
             <div className="flex flex-col items-center gap-3">
               <BookOpen className="w-12 h-12 text-muted-foreground" />
               <p className="text-muted-foreground text-lg">
-                این کمپین به پایان رسیده است
+                این پویش به پایان رسیده است
               </p>
               <p className="text-sm text-muted-foreground">
                 تعداد ختم انجام شده: {currentCompletionCount} بار
@@ -566,7 +566,7 @@ export default function CampaignReader({
             className="gap-2"
           >
             <Share2 className="w-5 h-5" />
-            {shareSuccess ? 'لینک کپی شد!' : 'اشتراک‌گذاری کمپین'}
+            {shareSuccess ? 'لینک کپی شد!' : 'اشتراک‌گذاری پویش'}
           </Button>
         </div>
       </div>

@@ -68,10 +68,10 @@ export default async function HomePage() {
             </div>
           </div>
           <h1 className="text-5xl font-bold mb-4 text-foreground">
-            کمپین‌های آسمانی
+            پویش های آسمانی
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            مشارکت در کمپین‌های ختم جمعی قرآن یا دعا
+            مشارکت در پویش‌های ختم جمعی قرآن و ادعیه
           </p>
         </div>
 
@@ -165,7 +165,7 @@ export default async function HomePage() {
           <Card className="max-w-2xl mx-auto text-center py-12">
             <CardContent>
               <p className="text-muted-foreground text-lg">
-                در حال حاضر کمپینی وجود ندارد
+                در حال حاضر پویشی وجود ندارد
               </p>
             </CardContent>
           </Card>

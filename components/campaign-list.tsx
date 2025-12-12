@@ -75,7 +75,7 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
     if (error) {
       console.error('Error deleting campaign:', error)
       alert(
-        `خطا در حذف کمپین: ${error.message}\n\nلطفا مطمئن شوید که دسترسی های پایگاه داده را اعمال کرده اید.`,
+        `خطا در حذف پویش: ${error.message}\n\nلطفا مطمئن شوید که دسترسی های پایگاه داده را اعمال کرده اید.`,
       )
       return
     }
@@ -114,7 +114,7 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
     return (
       <Card className="text-center py-12">
         <CardContent>
-          <p className="text-muted-foreground">هنوز کمپینی ایجاد نشده است</p>
+          <p className="text-muted-foreground">هنوز پویشی ایجاد نشده است</p>
         </CardContent>
       </Card>
     )
@@ -203,7 +203,7 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
                 ) : (
                   <>
                     <Copy className="w-4 h-4 ml-2" />
-                    کپی لینک کمپین
+                    کپی لینک پویش
                   </>
                 )}
               </Button>
@@ -241,13 +241,13 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>حذف کمپین</AlertDialogTitle>
+            <AlertDialogTitle>حذف پویش</AlertDialogTitle>
             <AlertDialogDescription>
-              آیا مطمئن هستید که می‌خواهید کمپین "{campaignToDelete?.name}" را
+              آیا مطمئن هستید که می‌خواهید پویش "{campaignToDelete?.name}" را
               حذف کنید؟
               <br />
               <span className="text-destructive font-semibold">
-                این عملیات غیرقابل بازگشت است و تمام اطلاعات مربوط به این کمپین
+                این عملیات غیرقابل بازگشت است و تمام اطلاعات مربوط به این پویش
                 از دیتابیس حذف خواهد شد.
               </span>
             </AlertDialogDescription>
@@ -258,7 +258,7 @@ export default function CampaignList({ campaigns }: { campaigns: Campaign[] }) {
               onClick={handleDeleteCampaign}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              حذف کمپین
+              حذف پویش
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

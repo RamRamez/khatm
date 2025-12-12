@@ -30,8 +30,8 @@ const uthmanic = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'ختم قرآن - کمپین های قرآنی',
-  description: 'پلتفرم ختم قرآن با کمپین های جمعی',
+  title: 'پویش ختم قرآن و ادعیه',
+  description: 'پلتفرم پویش ختم جمعی قرآن و ادعیه',
 }
 
 export default function RootLayout({

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Plus, BookOpen } from 'lucide-react'
+import { BookOpen, Plus } from 'lucide-react'
 import CampaignList from '@/components/campaign-list'
 import { Button } from '@/components/ui/button'
 import {
@@ -57,16 +57,16 @@ export default async function AdminDashboard() {
 
           <Card className="bg-gradient-to-l from-primary/10 to-accent/10">
             <CardHeader>
-              <CardTitle>کمپین های قرآنی</CardTitle>
+              <CardTitle>پویش‌های قرآنی</CardTitle>
               <CardDescription>
-                کمپین های خود را مدیریت کنید یا کمپین جدیدی ایجاد کنید
+                پویش‌های خود را مدیریت کنید یا پویش جدیدی ایجاد کنید
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href="/admin/create-campaign">
                 <Button size="lg" className="w-full sm:w-auto">
                   <Plus className="w-5 h-5 ml-2" />
-                  ایجاد کمپین جدید
+                  ایجاد پویش جدید
                 </Button>
               </Link>
             </CardContent>

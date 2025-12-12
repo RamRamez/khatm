@@ -43,7 +43,7 @@ export default function CreateCampaignPage() {
     e.preventDefault()
 
     if (!name.trim()) {
-      setError('لطفا نام کمپین را وارد کنید')
+      setError('لطفا نام پویش را وارد کنید')
       return
     }
 
@@ -132,22 +132,22 @@ export default function CreateCampaignPage() {
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-primary" />
               </div>
-              <h1 className="text-3xl font-bold">ایجاد کمپین جدید</h1>
+              <h1 className="text-3xl font-bold">ایجاد پویش جدید</h1>
             </div>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>اطلاعات کمپین</CardTitle>
+              <CardTitle>اطلاعات پویش</CardTitle>
               <CardDescription>
-                اطلاعات کمپین قرائت خود را وارد کنید
+                اطلاعات پویش ختم خود را وارد کنید
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateCampaign} className="space-y-6">
                 {/* Campaign Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="name">نام کمپین</Label>
+                  <Label htmlFor="name">نام پویش</Label>
                   <Input
                     id="name"
                     value={name}
@@ -159,7 +159,7 @@ export default function CreateCampaignPage() {
 
                 {/* Campaign Type */}
                 <div className="space-y-3">
-                  <Label>نوع کمپین</Label>
+                  <Label>نوع پویش</Label>
                   <RadioGroup
                     value={type}
                     onValueChange={v => setType(v as CampaignType)}
@@ -258,7 +258,7 @@ export default function CreateCampaignPage() {
 
                 {/* Campaign Visibility */}
                 <div className="space-y-3">
-                  <Label>نمایش کمپین</Label>
+                  <Label>نمایش پویش</Label>
                   <RadioGroup
                     value={isPublic ? 'public' : 'private'}
                     onValueChange={v => setIsPublic(v === 'public')}
@@ -277,7 +277,7 @@ export default function CreateCampaignPage() {
                           عمومی
                         </Label>
                         <p className="text-sm text-muted-foreground mt-1">
-                          کمپین در صفحه اصل نمایش داده می‌شود و همه کاربران
+                          پویش در صفحه اصل نمایش داده می‌شود و همه کاربران
                           می‌توانند آن را ببینند
                         </p>
                       </div>
@@ -297,8 +297,8 @@ export default function CreateCampaignPage() {
                           خصوصی
                         </Label>
                         <p className="text-sm text-muted-foreground mt-1">
-                          کمپین در صفحه اصل نمایش داده نمی‌شود و فقط از طریق
-                          لینک مستقیم قابل دسترسی است
+                          پویش در صفحه اصل نمایش داده نمی‌شود و فقط از طریق لینک
+                          مستقیم قابل دسترسی است
                         </p>
                       </div>
                     </div>
@@ -317,7 +317,7 @@ export default function CreateCampaignPage() {
                   size="lg"
                   disabled={loading}
                 >
-                  {loading ? 'در حال ایجاد...' : 'ایجاد کمپین'}
+                  {loading ? 'در حال ایجاد...' : 'ایجاد پویش'}
                 </Button>
               </form>
             </CardContent>
