@@ -36,6 +36,7 @@ type CampaignWithAttendance = Campaign & {
   topIps?: { ip: string; count: number }[]
   deviceCounts?: Record<string, number>
   osCounts?: Record<string, number>
+  userCounts?: { label: string; count: number }[]
   peakRange?: string
   peakDay?: string
 }
@@ -305,6 +306,52 @@ export default function StatsDashboard({
         </CardContent>
       </Card>
 
+      <div className="grid gap-4 lg:grid-cols-2">
+        {campaigns.map(c => {
+          const userData =
+            (c.userCounts || []).map(u => ({
+              name: u.label.startsWith('unknown')
+                ? 'نامشخص'
+                : u.label.slice(0, 8),
+              count: u.count,
+              full: u.label,
+            })) || []
+
+          if (!activityAvailable || userData.length === 0) return null
+
+          return (
+            <Card key={`users-${c.id}`}>
+              <CardHeader>
+                <CardTitle>جلسات پویش (session_id): {c.name}</CardTitle>
+                <CardDescription>
+                  تعداد حضور هر session (تا ۱۰ مورد برتر)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={userData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip
+                      formatter={(
+                        value: number,
+                        _name: string,
+                        entry?: { payload?: { full?: string; name?: string } },
+                      ) => [
+                        value,
+                        entry?.payload?.full || entry?.payload?.name,
+                      ]}
+                    />
+                    <Bar dataKey="count" name="حضور" fill="#06B6D4" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>فعالیت بر اساس ساعت شبانه‌روز</CardTitle>
@@ -419,8 +466,8 @@ export default function StatsDashboard({
           <CardDescription>اطلاعات کلیدی هر پویش</CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <div className="min-w-[680px] space-y-2">
-            <div className="grid grid-cols-7 text-sm font-semibold text-muted-foreground">
+          <div className="min-w-[1200px] space-y-2">
+            <div className="grid grid-cols-[1.4fr_repeat(14,1fr)] text-sm font-semibold text-muted-foreground">
               <div>نام</div>
               <div>نوع</div>
               <div>وضعیت</div>
@@ -432,7 +479,7 @@ export default function StatsDashboard({
               <div>آنلاین (۵ دقیقه)</div>
               <div>IPهای یکتا</div>
               <div>بازه پیک فعالیت</div>
-              <div>پیک روز</div>
+              <div>روز پیک</div>
               <div>۱۰ IP برتر</div>
               <div>دستگاه‌ها</div>
               <div>سیستم‌عامل</div>
@@ -440,7 +487,7 @@ export default function StatsDashboard({
             {campaigns.map(c => (
               <div
                 key={c.id}
-                className="grid grid-cols-[1.4fr_repeat(12,1fr)] items-center rounded-lg border bg-card p-3 text-sm"
+                className="grid grid-cols-[1.4fr_repeat(14,1fr)] items-center rounded-lg border bg-card p-3 text-sm"
               >
                 <div className="font-medium">{c.name}</div>
                 <div>

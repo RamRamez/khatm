@@ -8,6 +8,7 @@ export const revalidate = 0
 type AttendanceRow = {
   campaign_id: string | null
   session_id: string | null
+  user_id: string | null
   occurred_at: string | null
   ip_address: string | null
   device_type: string | null
@@ -45,6 +46,7 @@ export default async function AdminStatsPage() {
   let devicePerCampaign: Record<string, Record<string, number>> = {}
   let osTotals: Record<string, number> = {}
   let osPerCampaign: Record<string, Record<string, number>> = {}
+  let userTopMap: Record<string, { label: string; count: number }[]> = {}
   const activityByHour = Array.from({ length: 24 }, () => 0)
   let activityAvailable = false
   const now = new Date()
@@ -65,7 +67,7 @@ export default async function AdminStatsPage() {
     const { data: activityRows, error: activityError } = await supabase
       .from('campaign_activity_logs')
       .select(
-        'campaign_id, session_id, occurred_at, ip_address, device_type, device_os, device_os_version',
+        'campaign_id, session_id, user_id, occurred_at, ip_address, device_type, device_os, device_os_version',
       )
 
     const rows = (activityRows || []) as AttendanceRow[]
@@ -85,6 +87,7 @@ export default async function AdminStatsPage() {
       const deviceCountsGlobal = new Map<string, number>()
       const osCounts = new Map<string, Map<string, number>>()
       const osCountsGlobal = new Map<string, number>()
+      const userCounts = new Map<string, Map<string, number>>() // counts by session_id
 
       rows.forEach((row: AttendanceRow) => {
         if (!row.campaign_id || !row.session_id) return
@@ -92,6 +95,7 @@ export default async function AdminStatsPage() {
         const ip = row.ip_address?.trim()
         const device = (row.device_type || 'unknown').toLowerCase()
         const os = (row.device_os || 'unknown').toLowerCase()
+        const userLabel = row.session_id || 'unknown-session'
 
         if (!uniqueSessions.has(row.campaign_id)) {
           uniqueSessions.set(row.campaign_id, new Set())
@@ -169,6 +173,12 @@ export default async function AdminStatsPage() {
         osMap.set(os, (osMap.get(os) ?? 0) + 1)
 
         osCountsGlobal.set(os, (osCountsGlobal.get(os) ?? 0) + 1)
+
+        if (!userCounts.has(row.campaign_id)) {
+          userCounts.set(row.campaign_id, new Map())
+        }
+        const uMap = userCounts.get(row.campaign_id)!
+        uMap.set(userLabel, (uMap.get(userLabel) ?? 0) + 1)
       })
 
       uniqueMap = Object.fromEntries(
@@ -222,6 +232,16 @@ export default async function AdminStatsPage() {
 
       osTotals = Object.fromEntries(osCountsGlobal.entries())
 
+      userTopMap = Object.fromEntries(
+        Array.from(userCounts.entries()).map(([id, map]) => {
+          const sorted = Array.from(map.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([label, count]) => ({ label, count }))
+          return [id, sorted]
+        }),
+      )
+
       peakHourRangeMap = Object.fromEntries(
         Array.from(hourBuckets.entries()).map(([id, map]) => {
           if (map.size === 0) return [id, '—']
@@ -265,6 +285,7 @@ export default async function AdminStatsPage() {
     topIps: topIpsMap[campaign.id] ?? [],
     deviceCounts: devicePerCampaign[campaign.id] ?? {},
     osCounts: osPerCampaign[campaign.id] ?? {},
+    userCounts: userTopMap[campaign.id] ?? [],
     peakRange: peakHourRangeMap[campaign.id] ?? '—',
     peakDay: peakDayMap[campaign.id] ?? '—',
   }))

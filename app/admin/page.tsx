@@ -33,7 +33,7 @@ export default async function AdminDashboard() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-primary" />
@@ -43,7 +43,7 @@ export default async function AdminDashboard() {
                 <p className="text-muted-foreground">{user.email}</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
               <Link href="/admin/stats">
                 <Button>آمار پویش‌ها</Button>
               </Link>
