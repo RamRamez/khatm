@@ -26,6 +26,9 @@ export async function POST(
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request.headers.get('x-real-ip')?.trim() ||
+    request.headers.get('x-client-ip')?.trim() ||
+    request.headers.get('cf-connecting-ip')?.trim() ||
+    request.headers.get('fastly-client-ip')?.trim() ||
     null
   const ua = request.headers.get('user-agent') || ''
 
@@ -42,7 +45,7 @@ export async function POST(
     }
     return 'desktop'
   }
-  const deviceType = detectDeviceType(ua)
+  const deviceType = detectDeviceType(ua) || 'unknown'
   const detectOs = (
     userAgent: string,
   ): { os: string; osVersion: string | null } => {
@@ -73,6 +76,9 @@ export async function POST(
     return { os: 'unknown', osVersion: null }
   }
   const { os: deviceOs, osVersion: deviceOsVersion } = detectOs(ua)
+  const ipToStore = ip || 'unknown'
+  const deviceOsToStore = deviceOs || 'unknown'
+  const deviceOsVersionToStore = deviceOsVersion || 'unknown'
 
   const {
     data: { user },
@@ -129,6 +135,10 @@ export async function POST(
           campaign_id: campaign.id,
           user_id: user?.id ?? null,
           session_id: sessionId,
+          ip_address: ipToStore,
+          device_type: deviceType,
+          device_os: deviceOsToStore,
+          device_os_version: deviceOsVersionToStore,
         })
 
         return NextResponse.json({
@@ -194,10 +204,10 @@ export async function POST(
         campaign_id: campaign.id,
         user_id: user?.id ?? null,
         session_id: sessionId,
-        ip_address: ip,
+        ip_address: ipToStore,
         device_type: deviceType,
-        device_os: deviceOs,
-        device_os_version: deviceOsVersion,
+        device_os: deviceOsToStore,
+        device_os_version: deviceOsVersionToStore,
       })
 
       return NextResponse.json({
@@ -315,10 +325,10 @@ export async function POST(
       campaign_id: campaign.id,
       user_id: user?.id ?? null,
       session_id: sessionId,
-      ip_address: ip,
+      ip_address: ipToStore,
       device_type: deviceType,
-      device_os: deviceOs,
-      device_os_version: deviceOsVersion,
+      device_os: deviceOsToStore,
+      device_os_version: deviceOsVersionToStore,
     })
 
     return NextResponse.json(nextVerse)
