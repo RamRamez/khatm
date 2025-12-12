@@ -68,7 +68,7 @@ export default async function HomePage() {
             </div>
           </div>
           <h1 className="text-5xl font-bold mb-4 text-foreground">
-            پویش های آسمانی
+            پویش‌های آسمانی
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             مشارکت در پویش‌های ختم جمعی قرآن و ادعیه
