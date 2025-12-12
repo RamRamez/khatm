@@ -44,6 +44,9 @@ export default async function AdminDashboard() {
               </div>
             </div>
             <div className="flex gap-2">
+              <Link href="/admin/stats">
+                <Button>آمار پویش‌ها</Button>
+              </Link>
               <Link href="/">
                 <Button variant="outline">مشاهده سایت</Button>
               </Link>

@@ -56,16 +56,106 @@ export default function CampaignReader({
   const [nextBgFlash, setNextBgFlash] = useState(false)
   const [shareSuccess, setShareSuccess] = useState(false)
   const [continuousPlay, setContinuousPlay] = useState(false)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const hasLoadedInitialContent = useRef(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const shouldAutoPlayRef = useRef(false)
 
+  const getCookie = (name: string) => {
+    if (typeof document === 'undefined') return null
+    const match = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(`${name}=`))
+    return match ? decodeURIComponent(match.split('=')[1]) : null
+  }
+
+  const setCookie = (name: string, value: string, maxAgeSeconds: number) => {
+    if (typeof document === 'undefined') return
+    const secure =
+      typeof window !== 'undefined' && window.location.protocol === 'https:'
+    document.cookie = `${name}=${encodeURIComponent(
+      value,
+    )}; max-age=${maxAgeSeconds}; path=/; samesite=lax${secure ? '; secure' : ''}`
+  }
+
+  const fingerprintCache = useRef<string | null>(null)
+
+  const computeFingerprint = async () => {
+    if (fingerprintCache.current) return fingerprintCache.current
+    if (typeof window === 'undefined') return null
+    const data = [
+      navigator.userAgent,
+      navigator.language,
+      navigator.platform,
+      screen?.width,
+      screen?.height,
+      screen?.colorDepth,
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ].join('|')
+    const encoder = new TextEncoder()
+    const bytes = encoder.encode(data)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', bytes)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    fingerprintCache.current = hashHex
+    return hashHex
+  }
+
+  const ensureSessionId = async () => {
+    if (sessionId) return sessionId
+    if (typeof window === 'undefined') return null
+
+    const cookieId = getCookie('reader_session_id')
+    const localId = window.localStorage.getItem('reader_session_id')
+    const existing = cookieId || localId
+    const fingerprintHash = await computeFingerprint()
+    if (!fingerprintHash) return null
+
+    try {
+      const resp = await fetch('/api/session/ensure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fingerprintHash,
+          existingToken: existing || undefined,
+        }),
+      })
+      const json = await resp.json()
+      const token = json?.token as string | undefined
+      if (token) {
+        window.localStorage.setItem('reader_session_id', token)
+        setCookie('reader_session_id', token, 60 * 60 * 24 * 365)
+        setSessionId(token)
+        return token
+      }
+    } catch (err) {
+      console.error('Failed to ensure session id', err)
+    }
+
+    // Fallback: generate locally if API failed
+    const generated =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2)
+    window.localStorage.setItem('reader_session_id', generated)
+    setCookie('reader_session_id', generated, 60 * 60 * 24 * 365)
+    setSessionId(generated)
+    return generated
+  }
+
+  useEffect(() => {
+    // Ensure a persistent session id using server-backed token + local storage + cookie
+    if (typeof window === 'undefined') return
+    ensureSessionId().catch(err => console.error('ensureSessionId failed', err))
+  }, [])
+
   useEffect(() => {
     if (!campaign.is_active) return
+    if (!sessionId) return
     if (hasLoadedInitialContent.current) return
     hasLoadedInitialContent.current = true
     loadNextItem()
-  }, [campaign.is_active])
+  }, [campaign.is_active, sessionId])
 
   useEffect(() => {
     if (
@@ -245,7 +335,10 @@ export default function CampaignReader({
         `/api/campaigns/${campaign.slug}/next-verse`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionId ? { 'x-session-id': sessionId } : {}),
+          },
         },
       )
       const nextData = await nextResponse.json()

@@ -15,13 +15,68 @@ function getSahifaByKey(key?: string | null) {
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug: encodedSlug } = await params
   // Decode the slug to handle Persian/Arabic characters
   const slug = decodeURIComponent(encodedSlug)
   const supabase = await createClient()
+  const sessionId = request.headers.get('x-session-id')
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip')?.trim() ||
+    null
+  const ua = request.headers.get('user-agent') || ''
+
+  const detectDeviceType = (userAgent: string): string => {
+    const uaLower = userAgent.toLowerCase()
+    if (uaLower.includes('ipad') || uaLower.includes('tablet')) return 'tablet'
+    if (
+      uaLower.includes('mobi') ||
+      uaLower.includes('android') ||
+      uaLower.includes('iphone') ||
+      uaLower.includes('ipod')
+    ) {
+      return 'mobile'
+    }
+    return 'desktop'
+  }
+  const deviceType = detectDeviceType(ua)
+  const detectOs = (
+    userAgent: string,
+  ): { os: string; osVersion: string | null } => {
+    const uaLower = userAgent.toLowerCase()
+    if (uaLower.includes('android')) {
+      const match = /android\s([0-9._]+)/i.exec(userAgent)
+      return { os: 'android', osVersion: match?.[1] || null }
+    }
+    if (
+      uaLower.includes('iphone') ||
+      uaLower.includes('ipad') ||
+      uaLower.includes('ipod')
+    ) {
+      const match = /os\s([0-9_]+)/i.exec(userAgent)
+      return { os: 'ios', osVersion: match?.[1]?.replace(/_/g, '.') || null }
+    }
+    if (uaLower.includes('mac os x')) {
+      const match = /mac os x\s([0-9_]+)/i.exec(userAgent)
+      return { os: 'macos', osVersion: match?.[1]?.replace(/_/g, '.') || null }
+    }
+    if (uaLower.includes('windows')) {
+      const match = /windows nt\s([0-9.]+)/i.exec(userAgent)
+      return { os: 'windows', osVersion: match?.[1] || null }
+    }
+    if (uaLower.includes('linux')) {
+      return { os: 'linux', osVersion: null }
+    }
+    return { os: 'unknown', osVersion: null }
+  }
+  const { os: deviceOs, osVersion: deviceOsVersion } = detectOs(ua)
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   try {
     // Get campaign details with current position
@@ -68,6 +123,13 @@ export async function POST(
             completion_count: newCompletionCount,
           })
           .eq('id', campaign.id)
+
+        // Log activity
+        await supabase.from('campaign_activity_logs').insert({
+          campaign_id: campaign.id,
+          user_id: user?.id ?? null,
+          session_id: sessionId,
+        })
 
         return NextResponse.json({
           title: dua.title,
@@ -126,6 +188,17 @@ export async function POST(
           completion_count: newCompletionCount,
         })
         .eq('id', campaign.id)
+
+      // Log activity
+      await supabase.from('campaign_activity_logs').insert({
+        campaign_id: campaign.id,
+        user_id: user?.id ?? null,
+        session_id: sessionId,
+        ip_address: ip,
+        device_type: deviceType,
+        device_os: deviceOs,
+        device_os_version: deviceOsVersion,
+      })
 
       return NextResponse.json({
         title: sahifa.title,
@@ -236,6 +309,17 @@ export async function POST(
           .eq('id', campaign.id)
       }
     }
+
+    // Log activity
+    await supabase.from('campaign_activity_logs').insert({
+      campaign_id: campaign.id,
+      user_id: user?.id ?? null,
+      session_id: sessionId,
+      ip_address: ip,
+      device_type: deviceType,
+      device_os: deviceOs,
+      device_os_version: deviceOsVersion,
+    })
 
     return NextResponse.json(nextVerse)
   } catch (error) {
