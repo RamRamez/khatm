@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { getDuaByKey } from '@/lib/dua-data'
+import { getDuaByKey, isStaticDua } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
 import { CampaignType, type Campaign } from '@/lib/types'
 
@@ -158,9 +158,9 @@ export default function CampaignReader({
   const getOptimisticDua = (): Content | null => {
     if (campaign.type !== CampaignType.Dua) return null
     const dua = getDuaByKey(campaign.dua_key)
-    if (!dua) return null
+    if (!dua || !isStaticDua(dua)) return null
 
-    const totalItems = 1
+    const totalItems = dua.totalItems ?? 1
     const nextIndex =
       currentContent && currentContent.kind === 'dua'
         ? (currentContent.itemIndex % totalItems || 0) + 1
@@ -312,7 +312,7 @@ export default function CampaignReader({
 
     const shareData = {
       title: `کمپین ${campaign.name}`,
-      text: `در کمپین "${campaign.name}" شرکت کنید و با قرائت کمک کنید`,
+      text: `در کمپین "${campaign.name}" شرکت کنید`,
       url: campaignUrl,
     }
 
@@ -427,7 +427,9 @@ export default function CampaignReader({
                 <div className="flex flex-col items-center gap-3">
                   <BookOpen className="w-12 h-12 text-primary animate-pulse" />
                   <p className="text-muted-foreground text-lg">
-                    در حال بارگذاری آیه...
+                    {campaign.type === CampaignType.Dua
+                      ? 'در حال بارگذاری دعا...'
+                      : 'در حال بارگذاری آیه...'}
                   </p>
                 </div>
               ) : (
@@ -439,7 +441,7 @@ export default function CampaignReader({
                   {currentContent.arabic}
                 </p>
               )}
-              {currentContent.kind === CampaignType.Dua &&
+              {currentContent.kind === 'dua' &&
               !currentContent.audioUrl ? null : (
                 <div className="flex flex-col items-center gap-3 mt-4">
                   <audio

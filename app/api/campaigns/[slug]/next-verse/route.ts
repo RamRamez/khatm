@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server'
-import { getDuaByKey } from '@/lib/dua-data'
+import { getDuaByKey, isStaticDua } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
+import { SAHIFA_ITEMS, fetchSahifaVerses } from '@/lib/sahifa-data'
 import { createClient } from '@/lib/supabase/server'
 import { CampaignType } from '@/lib/types'
+
+function getSahifaByKey(key?: string | null) {
+  if (!key) return undefined
+  const match = /^sahifa-(\d+)$/.exec(key)
+  if (!match) return undefined
+  const id = Number(match[1])
+  if (!Number.isFinite(id)) return undefined
+  return SAHIFA_ITEMS.find(item => item.id === id)
+}
 
 export async function POST(
   _request: Request,
@@ -36,8 +46,71 @@ export async function POST(
         )
       }
 
-      const totalItems = 1
-      const currentIndex = campaign.current_dua_index || 1
+      if (isStaticDua(dua)) {
+        const totalItems = dua.totalItems ?? 1
+        const currentIndex =
+          campaign.current_dua_index && campaign.current_dua_index <= totalItems
+            ? campaign.current_dua_index
+            : 1
+
+        let nextIndex = currentIndex + 1
+        let newCompletionCount = campaign.completion_count || 0
+
+        if (nextIndex > totalItems) {
+          nextIndex = 1
+          newCompletionCount = newCompletionCount + 1
+        }
+
+        await supabase
+          .from('campaigns')
+          .update({
+            current_dua_index: nextIndex,
+            completion_count: newCompletionCount,
+          })
+          .eq('id', campaign.id)
+
+        return NextResponse.json({
+          title: dua.title,
+          arabic: dua.arabic,
+          translation: dua.translation,
+          audio_url: dua.audioUrl || null,
+          item_index: currentIndex,
+          total_items: totalItems,
+          completion_count: newCompletionCount,
+        })
+      }
+
+      const sahifa = getSahifaByKey(campaign.dua_key)
+      if (!sahifa) {
+        return NextResponse.json(
+          { error: 'Sahifa dua not found' },
+          { status: 400 },
+        )
+      }
+
+      let verses
+      try {
+        verses = await fetchSahifaVerses(sahifa.id)
+      } catch (error) {
+        console.error('Failed to load Sahifa verses', error)
+        return NextResponse.json(
+          { error: 'Unable to load Sahifa verses from source' },
+          { status: 502 },
+        )
+      }
+      if (!verses?.length) {
+        return NextResponse.json(
+          { error: 'No verses found for this Sahifa dua' },
+          { status: 502 },
+        )
+      }
+      const totalItems = verses.length
+      const currentIndex =
+        campaign.current_dua_index && campaign.current_dua_index <= totalItems
+          ? campaign.current_dua_index
+          : 1
+
+      const currentVerse = verses[(currentIndex - 1) % totalItems]
       let nextIndex = currentIndex + 1
       let newCompletionCount = campaign.completion_count || 0
 
@@ -55,10 +128,10 @@ export async function POST(
         .eq('id', campaign.id)
 
       return NextResponse.json({
-        title: dua.title,
-        arabic: dua.arabic,
-        translation: dua.translation,
-        audio_url: dua.audioUrl || null,
+        title: sahifa.title,
+        arabic: currentVerse.arabic,
+        translation: currentVerse.translation,
+        audio_url: null,
         item_index: currentIndex,
         total_items: totalItems,
         completion_count: newCompletionCount,
