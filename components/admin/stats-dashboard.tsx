@@ -49,6 +49,7 @@ type Props = {
   deviceTotals: Record<string, number>
   osTotals: Record<string, number>
   activityByHour: number[]
+  activityByDay: { date: string; count: number }[]
 }
 
 const COLORS = ['#6366F1', '#22C55E', '#F97316', '#06B6D4', '#A855F7']
@@ -61,6 +62,7 @@ export default function StatsDashboard({
   deviceTotals,
   osTotals,
   activityByHour,
+  activityByDay,
 }: Props) {
   const totalCampaigns = campaigns.length
   const activeCampaigns = campaigns.filter(c => c.is_active).length
@@ -130,6 +132,19 @@ export default function StatsDashboard({
     hour: `${idx.toString().padStart(2, '0')}:00`,
     count,
   }))
+
+  const dailyData = (activityByDay || [])
+    .slice()
+    .sort(
+      (
+        a: { date: string; count: number },
+        b: { date: string; count: number },
+      ) => (a.date > b.date ? 1 : -1),
+    )
+    .map((d: { date: string; count: number }) => ({
+      date: d.date,
+      count: d.count,
+    }))
 
   const typeData = Object.entries(typeCounts).map(([type, value]) => ({
     name:
@@ -365,6 +380,24 @@ export default function StatsDashboard({
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Bar dataKey="count" name="رویدادها" fill="#6366F1" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>فعالیت روزانه</CardTitle>
+          <CardDescription>تعداد رویداد ثبت‌شده در هر روز</CardDescription>
+        </CardHeader>
+        <CardContent className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={dailyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" name="رویدادها" fill="#22C55E" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

@@ -48,6 +48,7 @@ export default async function AdminStatsPage() {
   let osPerCampaign: Record<string, Record<string, number>> = {}
   let userTopMap: Record<string, { label: string; count: number }[]> = {}
   const activityByHour = Array.from({ length: 24 }, () => 0)
+  const activityByDay = new Map<string, number>()
   let activityAvailable = false
   const now = new Date()
   const threshold7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -120,6 +121,8 @@ export default async function AdminStatsPage() {
           const dt = new Date(row.occurred_at)
           const hour = dt.getHours()
           const day = dt.getDay()
+          const dayKey = dt.toISOString().slice(0, 10) // YYYY-MM-DD
+          activityByDay.set(dayKey, (activityByDay.get(dayKey) ?? 0) + 1)
           activityByHour[hour] = activityByHour[hour] + 1
           if (dt >= thresholdOnline) {
             if (!onlineSessions.has(row.campaign_id)) {
@@ -301,6 +304,12 @@ export default async function AdminStatsPage() {
           deviceTotals={deviceTotals}
           osTotals={osTotals}
           activityByHour={activityByHour}
+          activityByDay={Array.from(activityByDay.entries()).map(
+            ([date, count]) => ({
+              date,
+              count,
+            }),
+          )}
         />
       </div>
     </div>
