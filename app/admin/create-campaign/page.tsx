@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { getDuaOptions } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
-import { generateUniqueSlug } from '@/lib/slug'
+import { generateRandomSlug } from '@/lib/slug'
 import { createClient } from '@/lib/supabase/client'
 import { CampaignType } from '@/lib/types'
 
@@ -71,8 +71,8 @@ export default function CreateCampaignPage() {
         ? QURAN_SURAHS.find(s => s.number === surahNumber)
         : null
 
-    // Generate unique slug
-    const slug = await generateUniqueSlug(name.trim(), async checkSlug => {
+    // Generate a short random slug (Farsi titles make very long shareable URLs)
+    const slug = await generateRandomSlug(async checkSlug => {
       const { data } = await supabase
         .from('campaigns')
         .select('id')
