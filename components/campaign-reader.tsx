@@ -16,6 +16,7 @@ import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { getDuaByKey, isStaticDua } from '@/lib/dua-data'
 import { QURAN_SURAHS } from '@/lib/quran-data'
+import { getAyahText } from '@/lib/quran-text'
 import { CampaignType, type Campaign } from '@/lib/types'
 
 type Content =
@@ -268,18 +269,8 @@ export default function CampaignReader({
   }
 
   const fetchAyahText = async (surahNumber: number, verseNumber: number) => {
-    const [arabicResponse, persianResponse] = await Promise.all([
-      fetch(`https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}`),
-      fetch(
-        `https://api.alquran.cloud/v1/ayah/${surahNumber}:${verseNumber}/fa.fooladvand`,
-      ),
-    ])
-    const arabicData = await arabicResponse.json()
-    const persianData = await persianResponse.json()
-    return {
-      arabic: arabicData.data.text,
-      translation: persianData.data.text,
-    }
+    // Served from bundled static data (see lib/quran-text) — no external calls.
+    return getAyahText(surahNumber, verseNumber)
   }
 
   async function loadNextItem() {
@@ -541,11 +532,7 @@ export default function CampaignReader({
                     ref={audioRef}
                     src={
                       currentContent.kind === 'quran'
-                        ? `https://everyayah.com/data/Alafasy_128kbps/${currentContent.surah
-                            .toString()
-                            .padStart(3, '0')}${currentContent.verse
-                            .toString()
-                            .padStart(3, '0')}.mp3`
+                        ? `/api/quran/audio?surah=${currentContent.surah}&verse=${currentContent.verse}`
                         : currentContent.audioUrl || ''
                     }
                     onEnded={() => {

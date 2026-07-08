@@ -5,3 +5,4 @@
 .pnpm-store
 .vscode
 *.tsbuildinfo
+*.DS_Store
